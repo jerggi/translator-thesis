@@ -1,0 +1,653 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% I, the copyright holder of this work, release this work into the
+%% public domain. This applies worldwide. In some countries this may
+%% not be legally possible; if so: I grant anyone the right to use
+%% this work for any purpose, without any conditions, unless such
+%% conditions are required by law.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[
+  digital, %% This option enables the default options for the
+           %% digital version of a document. Replace with `printed`
+           %% to enable the default options for the printed version
+           %% of a document.
+  table,   %% Causes the coloring of tables. Replace with `notable`
+           %% to restore plain tables.
+  lof,     %% Prints the List of Figures. Replace with `nolof` to
+           %% hide the List of Figures.
+  lot,     %% Prints the List of Tables. Replace with `nolot` to
+           %% hide the List of Tables.
+  %% More options are listed in the user guide at
+  %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
+]{fithesis3}
+%% The following section sets up the locales used in the thesis.
+\usepackage[resetfonts]{cmap} %% We need to load the T2A font encoding
+\usepackage[T1,T2A]{fontenc}  %% to use the Cyrillic fonts with Russian texts.
+\usepackage[
+  main=slovak, english, %% By using `czech` or `slovak` as the main locale
+                %% instead of `english`, you can typeset the thesis
+                %% in either Czech or Slovak, respectively.
+  german, russian, czech %% The additional keys allow
+]{babel}        %% foreign texts to be typeset as follows:
+%%
+%%   \begin{otherlanguage}{german}  ... \end{otherlanguage}
+%%   \begin{otherlanguage}{russian} ... \end{otherlanguage}
+%%   \begin{otherlanguage}{czech}   ... \end{otherlanguage}
+%%   \begin{otherlanguage}{slovak}  ... \end{otherlanguage}
+%%
+%% For non-Latin scripts, it may be necessary to load additional
+%% fonts:
+\usepackage{paratype}
+\def\textrussian#1{{\usefont{T2A}{PTSerif-TLF}{m}{rm}#1}}
+%%
+%% The following section sets up the metadata of the thesis.
+\thesissetup{
+    date          = \the\year/\the\month/\the\day,
+    university    = mu,
+    faculty       = fi,
+    type          = mgr,
+    author        =  Jerguš Fašánek,
+    gender        = m,
+    advisor       = {Ing. RNDr. Barbora Bühnová, Ph.D.},
+    title         = {Cloudový slovníkový prekladač pre vývojárov},
+    TeXtitle      = {Cloudový slovníkový prekladač pre vývojárov},
+    keywords      = {slovník, cloud},
+    TeXkeywords   = {slovník, cloud},
+    bib           = example.bib,
+}
+\thesislong{abstract}{
+   Cieľom diplomovej prácej je navrhnúť a vytvoriť backend pre synchronizáciu slovníkov desktopovej offline aplikácie a následne vytvoriť webový frontend. Slovníky v aplikácií slúžia pre vývojárov spoločnosti Siemens s.r.o. na zjednodušenie práce na medzinárodných projektoch v cudzích jazykoch.
+}
+\thesislong{thanks}{
+    Rád by som sa poďakoval Mgr. Jiřímu Ohnheiserovi za pomoc a užitočné rady pri vypracovaní diplomovej práce a mojej priateľke Nikole Mišíkovej za podporu počas písania práce.
+}
+\usepackage{makeidx}      %% The `makeidx` package contains
+\makeindex                %% helper commands for index typesetting.
+%% These additional packages are used within the document:
+\usepackage{paralist} %% Compact list environments
+\usepackage{amsmath}  %% Mathematics
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{url}      %% Hyperlinks
+\usepackage{markdown} %% Lightweight Markup
+\begin{document}
+\chapter{Úvod}
+Theses are rumoured to be the capstones of education, so I decided
+to write one of my own. If all goes well, I will soon have a
+diploma under my belt. Wish me luck!
+
+\chapter{Slovník}
+Táto kapitola sa zaoberá základnými princípmi práce so slovníkmi, ktoré sú uplatňované rovnako v desktopovej aj vo webovej aplikácií.
+
+\section{Prípady použitia}
+Slovník je súbor slov, z ktorých každé má priradený nejaký preklad. Preklad môžu tvoriť aj viaceré slová alebo slovné spojenia. Predpokladanou hlavnou rolou používajúcou slovník sú vývojári pracujúci so zdrojovými kódmi v nemeckom jazyku. Môžeme rozlíšiť dva hlavné prípady užitia - preklad a vykonávanie zmien v slovníkoch.
+
+Preklad v slovníku funguje na princípe vyhľadávania slov v užívateľmi zvolených slovníkoch, pričom využíva porovnávanie na základne \textbf{Levenshteinovej vzdialenosti}. Užívateľ vie naraz prekladať viacero slov vďaka spracovaniu vstupu, ktorý zadal.
+
+Užívateľ má možnosť spravovať slovníky, ktoré môže vytvárať, editovať a odstraňovať. V rámci editácie slovníkov môže pridávať, meniť a vymazávať jednotlivé slová alebo ich preklad.
+
+\section{Spracovanie vstupu}
+Jednou zo základných charakteristík funkcionality aplikácie je spracovanie textového vstupu na množinu slov, ktoré sa majú v slovníkoch vyhľadať. Základným predpokladom je preklad rôznych výrazov zo zdrových kódov, takže na vstupe sa môžu očakávať napríklad názvy premenných, rôzne skratky alebo aj celý riadok z kódu. 
+
+Pri viacslovných pomenovaniach premenných alebo metód sa využívajú rôzne programátorské konvencie, napr. \textit{Camel Case} alebo \textit{Snake Case}, takže slovník poskytuje funkcionalitu pársovania takýchto slov a prekladá už priamo samotné rozpársované reťazce.
+
+\section{Vyhľadávanie slov}
+Vyhľadávanie slov v slovníku využíva porovnávanie hľadaného výrazu s každým slovom, je teda potrebné vždy prejsť celý slovník. Výstupom je množina slov, ktorá splňuje podmienku na zhodu s hľadaným slovom. Táto podmienka je daná zvolenou limitáciou výstupnej hodnoty, ktorú vypočítava Levenshteinova funkcia. Ak je výsledná hodnota menšia alebo rovná limitu, tak je slovo zaradené do množiny slov, ktorá sa zobrazí užívateľovi ako preklad.
+
+Takéto vyhľadávanie zvyšuje pravdepodobnosť, že užívateľ nájde preklad, ktorý potrebuje. Môže sa totiž stať, že zadal slovo v nepresnom tvare, ktorý sa odlišuje od kľúčového slova v slovníku, či už mylne alebo preklepom v písaní.
+
+
+\subsection{Levenshteinova vzdialenosť}
+Pre každé slovo v slovníku sa vypočíta tzv. Levenshteinova vzdialenosť s daným slovom. Je implementovaná ako funkcia, ktorá má 2 vstupné parametre dátového typu reťazec a jej výstupom je číselná hodnota, ktorá určuje celkový počet znakov, o ktoré sa dané 2 reťazce líšia. Dá sa to popísať aj ako počet operácií s jednotlivými znakmi reťazca, ktoré je potrebné vykonať, aby bol zhodný s druhým reťazcom.
+
+Medzi tieto operácie patrí pridanie, odobranie a zmena znanku za nejaký iný. Príklad týchto operácií môžeme vidieť na obrázku \ref{fig:levenshtein}. Nezáleží pri tom na tom, ktoré slovo máme editovať na ktoré, pretože znakové operácie sú symetrické. To znamená, že z ak máme operáciu pridania znaku do jedného slova, môžeme ju brať ako operáciu odstránenia znaku z druhého slova a pri editácií \textit{a} $\rightarrow$ \textit{b} môžeme opačne vykonať editáciu \textit{b} $\rightarrow$ \textit{a}. Minimálny počet operácií v zmene prvého slova na druhé teda ostáva rovnaký ako v zmene z druhého slova na prvé.
+
+Táto metrika bola zavedená v roku 1965 ruským matematikom Vladimírom Levenshteinom a doteraz sa využíva na porovnávanie slov v rôznych oblastiach informatiky napríklad v algoritmoch na zisťovanie preklepov alebo pri optickom rozoznávaní znakov.
+
+Ako príklad si zoberme slovo \textit{willkommen}, ktoré by bolo nájdené, aj keby bolo na vstup zadané slovo napríklad \textit{wilkomen}, pri ktorom je potrebné urobiť 2 znakové operácie, konkrétne pridanie znaku \textit{l} a \textit{m}. Ďalším príkladom môžu byť slová so špecifickými znakmi pre daný jazyk, konkrétne pre nemecký jazyk to sú znaky ako \textit{ß} alebo znaky s interpunkčnými znamienkami, napríklad \textit{ä} a \textit{ö}. Tieto znaky sa na bežnej anglickej alebo českej klávesnici ani nevyskytujú, takže požadované slová sú nájdené, aj keď je na vstupe slovo obsahujúce tieto znaky bez interpunkcie.
+
+\subsection{Algoritmus výpočtu Levenshteinovej vzdialenosti}
+Základom algoritmu je matica \textit{n} x \textit{m}, pričom tieto rozmery určujú dĺžky jedného a druhého slova. S využitím princípov dynamického programovania sa porovnávajú jednotlivé kombinácie prefixov obidvoch slov.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=\textwidth]{img/distance.png}
+	\end{center}
+    \caption{Operácie nad znakmi v slove.}
+	\label{fig:levenshtein}
+\end{figure}
+
+
+
+
+\chapter{Server}
+V tejto kapitole sa zaoberám serverom, ktorý slúži ako backend pre webového klienta aj pre desktopovú aplikáciu. Pre webového klienta backend poskytuje služby na prácu s dátami, ktoré predstavujú samotné slovníky, ďalej poskytuje preklad slov z vybraných slovníkov. Pre desktopovú aplikáciu poskytuje služby na synchronizáciu slovníkov.
+
+\section{Architektúra}
+Server je implementovaný v programovacom jazyku Javascript s využitím frameworku Node.js. Poskytuje endpointy pre požiadavky na základe protokolu HTTP. V nasledujúcich podkapitolách popisujem základné prvky a návrhové vzory, ktoré server využíva.
+
+\subsection{Node.js}
+Technológií pre implementáciu serveru je mnoho a ešte pred začiatkom implementácie sa bolo nutné rozhodnúť, ktorú zvoliť. Node.js je pomerne celkom nová technológia, vznikla v roku 2009, avšak odvtedy postupne získavala čoraz viac na popularite.
+
+Hlavnou myšlienkou vzniku bolo využitie Javascriptu aj na strane serveru a aj vďaka tomu si Node.js obľúbilo mnoho programátorv, ktorí mali skúsenosti prevažne so skriptovaním na strane klienta práve v tomto jazyku. Ďalšou výhodou bola možnosť využívať aj množstvo javascriptových knižníc, ktoré bolo veľmi jednoduché do aplikácie v Node.js naimportovať. Neskôr však vznikol nástroj na inštalácie externýhc knižních nazvaný Node Package Manager (NPM).
+
+Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File Systém pre správu súborov alebo HTTP pre správu požiadavkov. Najzaujímavejším prvkom sú určite asynchrónne metódy, vďaka ktorým napríklad nevznikajú blokujúce procesy spracovávajúce nejaký HTTP-request.
+
+
+Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práva takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Zvoli som Node.js najmä preto a ešte aj kvôli mojim skúsenostiam s Javascriptom.
+
+\subsection{Node Package Manager}
+NPM je najznámejší a najpoužívanejší nástroj pre správu externých knižníc, či už na strane klienta s využitím rôznych javascriptových frameworkov alebo na strane serveru využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice veľmi jednoducho zadaním jedného príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
+
+Konfiguračným súborom je \texttt{package.json}, v ktorom je zoznam použitých knižních, ktoré sa všetky stiahnu a nainštalujú príkazom \texttt{npm install} a následne je aplikácia už pripravená na spustenie. V \texttt{package.json} sa nachádza aj zoznam skriptov, ktoré je potom možné spustiť príkazom \texttt{npm} nasledovaným názvom skriptu.
+
+\subsection{Aplikačné vrstvy}
+Často sa v serverových ale aj iných aplikáciach využíva rozdelenie funkcionality na rôzne vrstvy. Môžu to byť konkrétne návrhové vzory, napríklad Facade layer alebo Service layer, z ktorý každá vykonáva špecifickú funkcionalitu. Takéto vrstvy majú komunikovať len so susednými vrstvami. V aplikácií nevyužívam konkrétne návrhové vzory, ale funkcionalita je rozdelená do troch vrstiev.
+
+V najvyššej vrstve sa spracovávajú požiadavky, ktoré prichádzajú na server. Validujú sa parametre požiadavkov vytvárajú sa odpovede na ne (HTTP-response). Táto vrstva komunikuje s prostrednou vrstvou volaním jej metód. Má na starosti zavolanie metódy so správnymi argumentmi a následné spracovanie výstupu danej metódy, na základe ktorého potom daný HTTP-response tvorí.
+
+Prostredná vrstva predstavuje aplikačnú logiku. Na základe argumentov, ktoré dostane, vykoná špecifickú funkcionalitu. K tej potrebuje samotné dáta a aby ich získala, využíva poslednú, najnižsiu vrstvu. Príkladom funkcionality môže byť vyhľadávanie slov v slovníkoch. Výsledky potom vracia najvyššej vrstve, prípadne sa môže jednať aj o chybové stavy.
+
+\subsection{Client–server model}
+Princíp modelu client-server je, že proces, ktorý predstavuje server, spracováva požiadavky prichádzajúce od viacerých klientov. Server posiela potom dáta naspäť klientom, u ktorých sa zobrazujú.
+
+Medzi získaním dát a ich zobrazením sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Táto logika môže byť vykonávaná buď na strane serveru alebo klienta a podla toho sa aj rozlišujú modely \textit{Thin Client} a \textit{Thick Client}. V prípade modelu \textit{Thin Client} sa väčšina logiky vykonáva na strane serveru, v pripade modelu \textit{Thick Client} je veľká časť logiky presunutá na stranu klienta.
+
+Ja som sa snažil väčšiu časť tejto logiky preniesť práve na stranu klienta. Server teda vytvára odpoveď len vo formáte JSON a ktorú následne webový klient spracuje a vytvára zodpovedajúci HTML kód. 
+
+\subsection{REST API}
+Pri vytváraní jednotlivých endpointov som využil princípov architektúry REST. Základnou entitou sú slovníky a všetky služby týkajúce sa práce s nimi začínajú prefixom \texttt{/dictionary}. Služby súvisiace s prácou s konkrétnym slovníkom potom majú prefix \texttt{/dictionary/:name}. Ďalej existujú služby na prácu so slovami v slovníku, tie majú prefix \texttt{/dictionary/:name/word}. Podrobný popis služieb sa nachádza v kapitole \ref{sec:api}.
+
+\subsection{Koa middleware}
+
+
+\section{Popis služieb API} \label{sec:api}
+
+
+\section{Spôsob uloženia slovníku}
+\section{Implementácia}
+
+\chapter{These are}
+\section{the available}
+\subsection{sectioning}
+\subsubsection{commands.}
+\paragraph{Paragraphs and}
+\subparagraph{subparagraphs are available as well.}
+Inside the text, you can also use unnumbered lists,
+\begin{itemize}
+  \item such as
+  \item this one
+  \begin{itemize}
+    \item     and they can be nested as well.
+    \item[>>] You can even turn the bullets into something fancier,
+    \item[\S] if you so desire.
+  \end{itemize}
+\end{itemize}
+Numbered lists are
+\begin{enumerate}
+  \item very
+  \begin{enumerate}
+    \item similar
+  \end{enumerate}
+\end{enumerate}
+and so are description lists:
+\begin{description}
+  \item[Description list]
+    A list of terms with a description of each term
+\end{description}
+The spacing of these lists is geared towards paragraphs of text.
+For lists of words and phrases, the \textsf{paralist} package
+offers commands
+\begin{compactitem}
+  \item that
+  \begin{compactitem}
+    \item are
+    \begin{compactitem}
+      \item better
+      \begin{compactitem}
+        \item suited
+      \end{compactitem}
+    \end{compactitem}
+  \end{compactitem}
+\end{compactitem}
+\begin{compactenum}
+  \item to
+  \begin{compactenum}
+    \item this
+    \begin{compactenum}
+      \item kind of
+      \begin{compactenum}
+        \item content.
+      \end{compactenum}
+    \end{compactenum}
+  \end{compactenum}
+\end{compactenum}
+The \textsf{amsthm} package provides the commands necessary for the
+typesetting of mathematical definitions, theorems, lemmas and
+proofs.
+
+%% We will define several mathematical sectioning commands.
+\newtheorem{theorem}{Theorem}[section] %% The numbering of theorems
+                               %% will be reset after each section.
+\newtheorem{lemma}[theorem]{Lemma}         %% The numbering of lemmas
+\newtheorem{corollary}[theorem]{Corollary} %% and corollaries will
+                               %% share the counter with theorems.
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\begin{theorem}
+  This is a theorem that offers a profound insight into the
+  mathematical sectioning commands.
+\end{theorem}
+\begin{theorem}[Another theorem]
+  This is another theorem. Unlike the first one, this theorem has
+  been endowed with a name.
+\end{theorem}
+\begin{lemma}
+  Let us suppose that $x^2+y^2=z^2$. Then
+  \begin{equation}
+    \biggl\langle u\biggm|\sum_{i=1}^nF(e_i,v)e_i\biggr\rangle
+    =F\biggl(\sum_{i=1}^n\langle e_i|u\rangle e_i,v\biggr).
+  \end{equation}
+\end{lemma}
+\begin{proof}
+  $\nabla^2 f(x,y)=\frac{\partial^2f}{\partial x^2}+
+   \frac{\partial^2f}{\partial y^2}$.
+\end{proof}
+\begin{corollary}
+  This is a corollary.
+\end{corollary}
+\begin{remark}
+  This is a remark.
+\end{remark}
+
+\chapter{Floats and references}
+\begin{figure}
+  \begin{center}
+    %% PNG and JPG images can be inserted into the document as well,
+    %% but their resolution needs to be adequate. The minimum is
+    %% about 100 pixels per 1 centimeter or 300 pixels per 1 inch.
+    %% That means that a JPG or PNG image typeset at 4 × 4 cm should
+    %% be 400 × 400 px large at the bare minimum.
+    %%
+    %% The optimum is about 250 pixels per 1 centimeter or 600
+    %% pixels per 1 inch. That means that a JPG or PNG image typeset
+    %% at 4 × 4 cm should be 1000 × 1000 px large or larger.
+    \includegraphics[width=4cm]{fithesis/logo/mu/fithesis-base.pdf}
+  \end{center}
+  \caption{The logo of the Masaryk University at 40\,mm}
+  \label{fig:mulogo1}
+\end{figure}
+
+\begin{figure}
+  \begin{minipage}{.66\textwidth}
+    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
+  \end{minipage}
+  \begin{minipage}{.33\textwidth}
+    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf} \\
+    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
+  \end{minipage}
+  \caption{The logo of the Masaryk University at $\frac23$ and
+    $\frac13$ of text width}
+  \label{fig:mulogo2}
+\end{figure}
+
+\begin{table}
+  \begin{tabularx}{\textwidth}{lllX}
+    \toprule
+    Day & Min Temp & Max Temp & Summary \\
+    \midrule
+    Monday & $13^{\circ}\mathrm{C}$ & $21^\circ\mathrm{C}$ & A
+    clear day with low wind and no adverse current advisories. \\
+    Tuesday & $11^{\circ}\mathrm{C}$ & $17^\circ\mathrm{C}$ & A
+    trough of low pressure will come from the northwest. \\
+    Wednesday & $10^{\circ}\mathrm{C}$ &
+    $21^\circ\mathrm{C}$ & Rain will spread to all parts during the
+    morning. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{A weather forecast}
+  \label{tab:weather}
+\end{table}
+
+The logo of the Masaryk University is shown in Figure
+\ref{fig:mulogo1} and Figure \ref{fig:mulogo2} at pages
+\pageref{fig:mulogo1} and \pageref{fig:mulogo2}. The weather
+forecast is shown in Table \ref{tab:weather} at page
+\pageref{tab:weather}. The following chapter is Chapter
+\ref{chap:matheq} and starts at page \pageref{chap:matheq}.
+Items \ref{item:star1}, \ref{item:star2}, and
+\ref{item:star3} are starred in the following list:
+\begin{compactenum}
+  \item some text
+  \item some other text
+  \item $\star$ \label{item:star1}
+  \begin{compactenum}
+    \item some text
+    \item $\star$ \label{item:star2}
+    \item some other text
+    \begin{compactenum}
+      \item some text
+      \item some other text
+      \item yet another piece of text
+      \item $\star$ \label{item:star3}
+    \end{compactenum}
+    \item yet another piece of text
+  \end{compactenum}
+  \item yet another piece of text
+\end{compactenum}
+If your reference points to a place that has not yet been typeset,
+the \verb"\ref" command will expand to \textbf{??} during the first
+run of
+\texttt{pdflatex \jobname.tex}
+and a second run is going to be needed for the references to
+resolve. With online services -- such as Overleaf -- this is
+performed automatically.
+
+\chapter{Mathematical equations}
+\label{chap:matheq}
+\TeX{} comes pre-packed with the ability to typeset inline
+equations, such as $\mathrm{e}^{ix}=\cos x+i\sin x$, and display
+equations, such as \[
+  \mathbf{A}^{-1} = \begin{bmatrix}
+  a & b \\ c & d \\
+  \end{bmatrix}^{-1} =
+  \frac{1}{\det(\mathbf{A})} \begin{bmatrix}
+  \,\,\,d & \!\!-b \\ -c & \,a \\
+  \end{bmatrix} =
+  \frac{1}{ad - bc} \begin{bmatrix}
+  \,\,\,d & \!\!-b \\ -c & \,a \\
+  \end{bmatrix}.
+\] \LaTeX{} defines the automatically numbered \texttt{equation}
+environment:
+\begin{equation}
+  \gamma Px = PAx = PAP^{-1}Px.
+\end{equation}
+The package \textsf{amsmath} provides several additional
+environments that can be used to typeset complex equations:
+\begin{enumerate}
+  \item An equation can be spread over multiple lines using the
+    \texttt{multline} environment:
+    \begin{multline}
+      a + b + c + d + e + f + b + c + d + e + f + b + c + d + e +
+f \\
+      + f + g + h + i + j + k + l + m + n + o + p + q
+    \end{multline}
+
+  \item Several aligned equations can be typeset using the
+    \texttt{align} environment:
+    \begin{align}
+              a + b &= c + d     \\
+                  u &= v + w + x \\[1ex]
+      i + j + k + l &= m
+    \end{align}
+
+  \item The \texttt{alignat} environment is similar to
+    \texttt{align}, but it doesn't insert horizontal spaces between
+    the individual columns:
+    \begin{alignat}{2}
+      a + b + c &+ d       &   &= 0 \\
+              e &+ f + g   &   &= 5
+    \end{alignat}
+
+  \item Much like chapter, sections, tables, figures, or list
+    items, equations -- such as \eqref{eq:first} and
+    \eqref{eq:mine} -- can also be labeled and referenced:
+    \begin{alignat}{4}
+      b_{11}x_1 &+ b_{12}x_2  &  &+ b_{13}x_3  &  &             &
+        &= y_1,                   \label{eq:first} \\
+      b_{21}x_1 &+ b_{22}x_2  &  &             &  &+ b_{24}x_4  &
+        &= y_2. \tag{My equation} \label{eq:mine}
+    \end{alignat}
+
+  \item The \texttt{gather} environment makes it possible to
+    typeset several equations without any alignment:
+    \begin{gather}
+      \psi = \psi\psi, \\
+      \eta = \eta\eta\eta\eta\eta\eta, \\
+      \theta = \theta.
+    \end{gather}
+
+  \item Several cases can be typeset using the \texttt{cases}
+    environment:
+    \begin{equation}
+      |y| = \begin{cases}
+        \phantom-y & \text{if }z\geq0, \\
+                -y & \text{otherwise}.
+      \end{cases}
+    \end{equation}
+\end{enumerate}
+For the complete list of environments and commands, consult the
+\textsf{amsmath} package manual\footnote{
+  See \url{http://mirrors.ctan.org/macros/latex/required/amslatex/math/amsldoc.pdf}.
+  The \texttt{\textbackslash url} command is provided by the
+  package \textsf{url}.
+}.
+
+\chapter{\textnormal{We \textsf{have} \texttt{several} \textsc{fonts}
+  \textit{at} \textbf{disposal}}}
+The serified roman font is used for the main body of the text.
+\textit{Italics are typically used to denote emphasis or
+quotations.} \texttt{The teletype font is typically used for source
+code listings.} The \textbf{bold}, \textsc{small-caps} and
+\textsf{sans-serif} variants of the base roman font can be used to
+denote specific types of information.
+
+\tiny We \scriptsize can \footnotesize also \small change \normalsize
+the \large font \Large size, \LARGE although \huge it \Huge
+is \huge usually \LARGE not \Large necessary.\normalsize
+
+A wide variety of mathematical fonts is also available, such as: \[
+  \mathrm{ABC}, \mathcal{ABC}, \mathbf{ABC}, \mathsf{ABC},
+  \mathit{ABC}, \mathtt{ABC}
+\] By loading the \textsf{amsfonts} packages, several additional
+fonts will become available: \[
+  \mathfrak{ABC}, \mathbb{ABC}
+\] Many other mathematical fonts are available\footnote{
+  See \url{http://tex.stackexchange.com/a/58124/70941}.
+}.
+
+\chapter{Using lightweight markup}
+\shorthandoff{-}
+\begin{markdown*}{%
+  hybrid,
+  definitionLists,
+  footnotes,
+  hashEnumerators}
+
+If you decide that \LaTeX{} is too wordy for some parts of your
+document, there are [packages](https://www.ctan.org/pkg/markdown
+"Markdown") that allow you to use more lightweight markup next
+to it.
+
+ ![logo](fithesis/logo/mu/fithesis-base.pdf "The logo of the
+  Masaryk University")
+
+This is a bullet list. Unlike numbered lists, bulleted lists
+contain an **unordered** set of bullet points. When a bullet point
+contains multiple paragraphs, the list is typeset as follows:
+
+  * The first item of a bullet list
+
+    that spans several paragraphs,
+  * the second item of a bullet list,
+  * the third item of a bullet list.
+
+When none of the bullet points contains multiple paragraphs, the
+list has a more compact form:
+
+  * The first item of a bullet list,
+  * the second item of a bullet list,
+  * the third item of a bullet list.
+
+Unlike a bulleted list, a numbered list implies chronology or
+ordering of the bullet points. When a bullet point
+contains multiple paragraphs, the list is typeset as follows:
+
+  1. The first item of an ordered list
+
+     that spans several paragraphs,
+  2. the second item of an ordered list,
+  3. the third item of an ordered list.
+  #. If you are feeling lazy,
+  #. you can use hash enumerators as well.
+
+When none of the bullet points contains multiple paragraphs, the
+list has a more compact form:
+
+  6. The first item of an ordered list,
+  7. the second item of an ordered list,
+  8. the third item of an ordered list.
+
+Definition lists are used to provide definitions of terms. When
+a definition contains multiple paragraphs, the list is typeset
+as follows:
+
+Term 1
+
+:   Definition 1
+
+*Term 2*
+
+:   Definition 2
+
+        Some code, part of Definition 2
+
+    Third paragraph of Definition 2.
+
+When none of the bullet points contains multiple paragraphs, the
+list has a more compact form:
+
+Term 1
+:   Definition 1
+*Term 2*
+:   Definition 2
+
+Block quotations are used to include an excerpt from an external
+document in way that visually clearly separates the excerpt from
+the rest of the work:
+
+> This is the first level of quoting.
+>
+> > This is nested blockquote.
+>
+> Back to the first level.
+
+Footnotes are used to include additional information to the
+document that are not necessary for the understanding of the main
+text. Here is a footnote reference[^1] and another[^longnote].
+
+[^1]: Here is the footnote.
+
+[^longnote]: Here's one with multiple blocks.
+
+    Subsequent paragraphs are indented to show that they
+belong to the previous footnote.
+
+        Some code
+
+    The whole paragraph can be indented, or just the first
+    line.  In this way, multi-paragraph footnotes work like
+    multi-paragraph list items.
+\end{markdown*}
+\shorthandon{-}
+
+\chapter{Inserting the bibliography}
+After linking a bibliography data\-base files to the document using
+the \verb"\"\texttt{thesissetup\{bib\discretionary{=}{=}{=}%
+\{\textit{file1},\textit{file2},\,\ldots\,\}\}} command, you can
+start citing the entries. This is just dummy text
+\parencite{borgman03} lightly sprinkled with citations
+\parencite[p.~123]{greenberg98}. Several sources can be cited at
+once: \cite{borgman03,greenberg98,thanh01}.
+\citetitle{greenberg98} was written by \citeauthor{greenberg98} in
+\citeyear{greenberg98}. We can also produce \textcite{greenberg98}%
+\ or %% Let us define a compound command:
+\def\citeauthoryear#1{(\textcite{#1},~\citeyear{#1})}%
+\citeauthoryear{greenberg98}%
+. The full bibliographic citation is:
+\emph{\fullcite{greenberg98}}. We can easily insert a bibliographic
+citation into the footnote\footfullcite{greenberg98}.
+
+The \verb"\nocite" command will not generate any
+output\nocite{muni}, but it will insert its arguments into
+the bibliography. The \verb"\nocite{*}" command will insert all the
+records in the bibliography database file into the bibliography.
+Try uncommenting the command
+%% \nocite{*}
+and watch the bibliography section come apart at the seams.
+
+When typesetting the document for the first time, citing a
+\texttt{work} will expand to [\textbf{work}] and the
+\verb"\printbibliography" command will produce no output. It is now
+necessary to generate the bibliography by running \texttt{biber
+\jobname.bcf} from the command line and then by typesetting the
+document again twice. During the first run, the bibliography
+section and the citations will be typeset, and in the second run,
+the bibliography section will appear in the table of contents.
+
+The \texttt{biber} command needs to be executed from within the
+directory, where the \LaTeX\ source file is located. In Windows,
+the command line can be opened in a directory by holding down the
+\textsf{Shift} key and by clicking the right mouse button while
+hovering the cursor over a directory.  Select the \textsf{Open
+Command Window Here} option in the context menu that opens shortly
+afterwards.
+
+With online services -- such as Overleaf -- or when using an
+automatic tool -- such as \LaTeX MK -- all commands are executed
+automatically. When you omit the \verb"\printbibliography" command,
+its location will be decided by the template.
+
+  \printbibliography[heading=bibintoc] %% Print the bibliography.
+
+\chapter{Inserting the index}
+After using the \verb"\makeindex" macro and loading the
+\texttt{makeidx} package that provides additional indexing
+commands, index entries can be created by issuing the \verb"\index"
+command. \index{dummy text|(}It is possible to create ranged index
+entries, which will encompass a span of text.\index{dummy text|)}
+To insert complex typographic material -- such as $\alpha$
+\index{alpha@$\alpha$} or \TeX{} \index{TeX@\TeX} --
+into the index, you need to specify a text string, which will
+determine how the entry will be sorted. It is also possible to
+create hierarchal entries. \index{vehicles!trucks}
+\index{vehicles!speed cars}
+
+After typesetting the document, it is necessary to generate the
+index by running
+\begin{center}%
+  \texttt{texindy -I latex -C utf8 -L }$\langle$\textit{locale}%
+  $\rangle$\texttt{ \jobname.idx}
+\end{center}
+from the command line, where $\langle$\textit{locale}$\rangle$
+corresponds to the main locale of your thesis -- such as
+\texttt{slovak}, and then typesetting the document again.
+
+The \texttt{texindy} command needs to be executed from within the
+directory, where the \LaTeX\ source file is located. In Windows,
+the command line can be opened in a directory by holding down the
+\textsf{Shift} key and by clicking the right mouse button while
+hovering the cursor over a directory. Select the \textsf{Open Command
+Window Here} option in the context menu that opens shortly
+afterwards.
+
+With online services -- such as Overleaf -- the commands are
+executed automatically, although the locale may be erroneously
+detected, or the \texttt{makeindex} tool (which is only able to
+sort entries that contain digits and letters of the English
+alphabet) may be used instead of \texttt{texindy}. In either case,
+the index will be ill-sorted.
+
+  \makeatletter\thesis@blocks@clear\makeatother
+  \phantomsection %% Print the index and insert it into the
+  \addcontentsline{toc}{chapter}{\indexname} %% table of contents.
+  \printindex
+
+\appendix %% Start the appendices.
+\chapter{An appendix}
+Here you can insert the appendices of your thesis.
+
+\end{document}
