@@ -106,9 +106,6 @@ Táto metrika bola zavedená v roku 1965 ruským matematikom Vladimírom Levensh
 
 Ako príklad si zoberme slovo \textit{willkommen}, ktoré by bolo nájdené, aj keby bolo na vstup zadané slovo napríklad \textit{wilkomen}, pri ktorom je potrebné urobiť 2 znakové operácie, konkrétne pridanie znaku \textit{l} a \textit{m}. Ďalším príkladom môžu byť slová so špecifickými znakmi pre daný jazyk, konkrétne pre nemecký jazyk to sú znaky ako \textit{ß} alebo znaky s interpunkčnými znamienkami, napríklad \textit{ä} a \textit{ö}. Tieto znaky sa na bežnej anglickej alebo českej klávesnici ani nevyskytujú, takže požadované slová sú nájdené, aj keď je na vstupe slovo obsahujúce tieto znaky bez interpunkcie.
 
-\subsection{Algoritmus výpočtu Levenshteinovej vzdialenosti}
-Základom algoritmu je matica \textit{n} x \textit{m}, pričom tieto rozmery určujú dĺžky jedného a druhého slova. S využitím princípov dynamického programovania sa porovnávajú jednotlivé kombinácie prefixov obidvoch slov.
-
 \begin{figure}
 	\begin{center}
 	\includegraphics[width=\textwidth]{img/distance.png}
@@ -117,29 +114,64 @@ Základom algoritmu je matica \textit{n} x \textit{m}, pričom tieto rozmery ur�
 	\label{fig:levenshtein}
 \end{figure}
 
+\subsection{Algoritmus výpočtu Levenshteinovej vzdialenosti}
+Základom algoritmu je matica \textit{n} x \textit{m}, pričom tieto rozmery určujú dĺžky jedného a druhého slova. S využitím princípov dynamického programovania sa porovnávajú jednotlivé kombinácie prefixov obidvoch slov.
 
+ \begin{equation}
+ \texttt{D[i,j] = min}\begin{cases}
+       \texttt{D[i - 1][j - 1] + 1} \\
+       \texttt{D[i][j - 1] + 1} \\
+       \texttt{D[i - 1][j] + 1}
+       \end{cases}
+ \end{equation}
 
 
 \chapter{Server}
 V tejto kapitole sa zaoberám serverom, ktorý slúži ako backend pre webového klienta aj pre desktopovú aplikáciu. Pre webového klienta backend poskytuje služby na prácu s dátami, ktoré predstavujú samotné slovníky, ďalej poskytuje preklad slov z vybraných slovníkov. Pre desktopovú aplikáciu poskytuje služby na synchronizáciu slovníkov.
 
-\section{Architektúra}
-Server je implementovaný v programovacom jazyku Javascript s využitím frameworku Node.js. Poskytuje endpointy pre požiadavky na základe protokolu HTTP. V nasledujúcich podkapitolách popisujem základné prvky a návrhové vzory, ktoré server využíva.
+\section{Použité technológie}
+Server je implementovaný v programovacom jazyku Javascript s využitím frameworku Node.js.
 
 \subsection{Node.js}
 Technológií pre implementáciu serveru je mnoho a ešte pred začiatkom implementácie sa bolo nutné rozhodnúť, ktorú zvoliť. Node.js je pomerne celkom nová technológia, vznikla v roku 2009, avšak odvtedy postupne získavala čoraz viac na popularite.
 
 Hlavnou myšlienkou vzniku bolo využitie Javascriptu aj na strane serveru a aj vďaka tomu si Node.js obľúbilo mnoho programátorv, ktorí mali skúsenosti prevažne so skriptovaním na strane klienta práve v tomto jazyku. Ďalšou výhodou bola možnosť využívať aj množstvo javascriptových knižníc, ktoré bolo veľmi jednoduché do aplikácie v Node.js naimportovať. Neskôr však vznikol nástroj na inštalácie externýhc knižních nazvaný Node Package Manager (NPM).
 
-Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File Systém pre správu súborov alebo HTTP pre správu požiadavkov. Najzaujímavejším prvkom sú určite asynchrónne metódy, vďaka ktorým napríklad nevznikajú blokujúce procesy spracovávajúce nejaký HTTP-request.
+Základom Node.js je V8 javascriptový interpreter pre Google Chrome. Je založený na asynchrónnom spracovaní udalostí, takže napríklad nevznikajú blokujúce I/O procesy, medzi ktoré patrí prístup k súborom na disku alebo k sieťovým funkciam. Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File System pre správu súborov alebo HTTP pre správu požiadavkov.
 
-
-Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práva takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Zvoli som Node.js najmä preto a ešte aj kvôli mojim skúsenostiam s Javascriptom.
+Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práve takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Zvoli som Node.js najmä preto a ešte aj kvôli mojim skúsenostiam s Javascriptom.
 
 \subsection{Node Package Manager}
-NPM je najznámejší a najpoužívanejší nástroj pre správu externých knižníc, či už na strane klienta s využitím rôznych javascriptových frameworkov alebo na strane serveru využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice veľmi jednoducho zadaním jedného príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
+NPM je najznámejší a najpoužívanejší nástroj pre správu javascriptových externých knižníc, či už na strane klienta s využitím rôznych komplexnejších frameworkov alebo na strane serveru využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice jednoducho zadaním príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
 
 Konfiguračným súborom je \texttt{package.json}, v ktorom je zoznam použitých knižních, ktoré sa všetky stiahnu a nainštalujú príkazom \texttt{npm install} a následne je aplikácia už pripravená na spustenie. V \texttt{package.json} sa nachádza aj zoznam skriptov, ktoré je potom možné spustiť príkazom \texttt{npm} nasledovaným názvom skriptu.
+
+Knižnice môžu mať tiež svoj vlastný \texttt{package.json}, v ktorom sa nachádza zoznam ďalších knižníc, ktoré samotná knižnica využíva. Pri inštalácií sa vytvorí priečinok \texttt{node\_modules} obsahujúci jednotlivé knižnice a zároveň aj knižnice nainštalované ako ich závislosti.
+
+\subsection{Koa}
+Koa je jeden z frameworkov pre Node.js slúžiaci pre vývoj webových aplikácií. Je to pomerne málo rozsiahla knižnica s jednoduchou funkcionalitou, ale umožňuje rôzne rozšírenia o ďalšie frameworky a to formou funkcií, ktoré fungujú ako middleware. 
+
+V aplikácií sa na začiatku vytvorí objekt obsahujúci metódu \texttt{use}, ktorej parametrom je asynchrónna funkcia - middleware. Tá ma dva vstupné parametre. Prvým z nich je objekt predstavujúci kontext HTTP požiadavku (\texttt{ctx}) a druhým je asynchrónna funkcia (\texttt{next}), ktorá spúšťa ďalší middleware.
+
+\paragraph{Kontext požiadavku}
+Kontext obsahuje pod atribútom \texttt{ctx.request} všetky parametre požiadavku prijatého na server, napríklad hlavičky, typ HTTP metódy alebo telo požiadavku. Zároveň je možné nastavovať parametre odpovede, ktorú server bude odosielať, napríklad \texttt{ctx.body} nastaví telo alebo \texttt{ctx.status} nastaví status kód.
+
+\paragraph{Koa middleware}
+Na obrázku \ref{fig:koa-middleware} je sekvenčný diagram, v ktorom je znázornené poradie vykonávania jednotlivých middlewarov. To je určené tak, v akom poradí sa zavolajú jednotlivé middleware-y metódou \texttt{use}. Vo funkcii predstavujúcej middleware je možné použiť \texttt{await} pred príkazom 
+\texttt{next} a zvyšok príkazov sa tak vykoná až po skončení nasledujúceho middleware-u.
+
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=\textwidth]{img/koa-middleware.png}
+	\end{center}
+    \caption{Koa middleware}
+	\label{fig:koa-middleware}
+\end{figure}
+
+
+\section{Architektúra}
+Server je implementovaný v programovacom jazyku Javascript s využitím frameworku Node.js. Poskytuje endpointy pre požiadavky na základe protokolu HTTP. V nasledujúcich podkapitolách popisujem základné prvky a návrhové vzory, ktoré server využíva.
 
 \subsection{Aplikačné vrstvy}
 Často sa v serverových ale aj iných aplikáciach využíva rozdelenie funkcionality na rôzne vrstvy. Môžu to byť konkrétne návrhové vzory, napríklad Facade layer alebo Service layer, z ktorý každá vykonáva špecifickú funkcionalitu. Takéto vrstvy majú komunikovať len so susednými vrstvami. V aplikácií nevyužívam konkrétne návrhové vzory, ale funkcionalita je rozdelená do troch vrstiev.
@@ -151,20 +183,56 @@ Prostredná vrstva predstavuje aplikačnú logiku. Na základe argumentov, ktor�
 \subsection{Client–server model}
 Princíp modelu client-server je, že proces, ktorý predstavuje server, spracováva požiadavky prichádzajúce od viacerých klientov. Server posiela potom dáta naspäť klientom, u ktorých sa zobrazujú.
 
-Medzi získaním dát a ich zobrazením sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Táto logika môže byť vykonávaná buď na strane serveru alebo klienta a podla toho sa aj rozlišujú modely \textit{Thin Client} a \textit{Thick Client}. V prípade modelu \textit{Thin Client} sa väčšina logiky vykonáva na strane serveru, v pripade modelu \textit{Thick Client} je veľká časť logiky presunutá na stranu klienta.
+Pri toku dát zo servera ku klientovi sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Pri opačnom toku dát - od klienta na server, je nutné spracovať akcie, ktoré užívatelia vykonávajú.
 
-Ja som sa snažil väčšiu časť tejto logiky preniesť práve na stranu klienta. Server teda vytvára odpoveď len vo formáte JSON a ktorú následne webový klient spracuje a vytvára zodpovedajúci HTML kód. 
+Táto logika môže byť vykonávaná aj na strane serveru a aj na strane klienta a podla toho sa aj rozlišujú modely \textit{Thin Client} a \textit{Thick Client}. V prípade modelu \textit{Thin Client} sa väčšina logiky vykonáva na strane serveru, v pripade modelu \textit{Thick Client} je veľká časť logiky presunutá na stranu klienta.
+
+Ja som sa snažil väčšiu časť tejto logiky preniesť práve na stranu klienta. Server teda vytvára odpoveď len vo formáte JSON, ktorú následne webový klient spracuje a vytvára zodpovedajúci HTML kód. Užívateľské akcie sú spracovávané na klientovi, ktorý posiela zodpovedajúce požiadavky serveru buď na čítanie alebo zapisovanie dát.
 
 \subsection{REST API}
-Pri vytváraní jednotlivých endpointov som využil princípov architektúry REST. Základnou entitou sú slovníky a všetky služby týkajúce sa práce s nimi začínajú prefixom \texttt{/dictionary}. Služby súvisiace s prácou s konkrétnym slovníkom potom majú prefix \texttt{/dictionary/:name}. Ďalej existujú služby na prácu so slovami v slovníku, tie majú prefix \texttt{/dictionary/:name/word}. Podrobný popis služieb sa nachádza v kapitole \ref{sec:api}.
+Pri vytváraní jednotlivých endpointov som využil princípov architektúry REST (Representational State Transfer). Je to architektúra na jednotný prístup k dátam aplikácie alebo k procedúram s dátami. Každá dátová entita má svoj jedinečný indentifikátor označovaný ako URI (Uniform Resource Identifier).
 
-\subsection{Koa middleware}
+Táto architektúra umožňuje pristupovať k zdrojom pomocou metód protokolu HTTP a využíva z nich tieto štyri:
+\begin{itemize}
+	\item \texttt{GET} na získanie prístupu k dátam
+	\item \texttt{POST} na vytvorenie nových dát
+	\item \texttt{PUT} na editáciu existujúcich dát
+    \item \texttt{DELETE} na vymazanie dát
+\end{itemize}
+
+Základnou entitou sú slovníky a všetky služby týkajúce sa práce s nimi začínajú prefixom \texttt{/dictionary}. Služby súvisiace s prácou s konkrétnym slovníkom potom majú prefix \texttt{/dictionary/:name}. Ďalej existujú služby na prácu so slovami v slovníku, tie majú prefix \texttt{/dictionary/:name/word}. Podrobný popis služieb sa nachádza v kapitole \ref{sec:api}.
+
+V tejto aplikácií sú všetky odosielané aj prijímané dáta vo formáte JSON, pretože je kompaktnejší, prehľadnejší a najmä je to natívny formát jazyku Javascript, v ktorom je napísaný aj server aj klient.
 
 
 \section{Popis služieb API} \label{sec:api}
 
+\texttt{GET api/version}
+\\
+\texttt{GET api/dictionary}
+\\
+\texttt{POST api/dictionary}
+\\
+\texttt{GET api/dictionary/:name}
+\\
+\texttt{DELETE api/dictionary/:name}
+\\
+\texttt{POST api/dictionary/:name/word/}
+\\
+\texttt{PUT api/dictionary/:name/word/}
+\\
+\texttt{DELETE api/dictionary/:name/word/}
+\\
+\texttt{POST api/sync/dictionary/:name}
+\\
+\texttt{GET api/translate}
+\\
+
 
 \section{Spôsob uloženia slovníku}
+\subsection{Porovnanie}
+
+
 \section{Implementácia}
 
 \chapter{These are}
