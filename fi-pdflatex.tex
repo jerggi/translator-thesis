@@ -70,6 +70,7 @@
 \usepackage{amsfonts}
 \usepackage{url}      %% Hyperlinks
 \usepackage{markdown} %% Lightweight Markup
+\usepackage{listings}
 \begin{document}
 \chapter{Úvod}
 Theses are rumoured to be the capstones of education, so I decided
@@ -208,9 +209,30 @@ V tejto aplikácií sú všetky odosielané aj prijímané dáta vo formáte JSO
 \section{Popis služieb API} \label{sec:api}
 
 \texttt{GET api/version}
-\\
+\begin{itemize}
+\item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "app":"dictionaryServer",
+  "version":"0.0.0"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
 \texttt{GET api/dictionary}
-\\
+\begin{itemize}
+\item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "app":"dictionaryServer",
+  "version":"0.0.0"
+}
+\end{lstlisting}
+\end{itemize}
+
 \texttt{POST api/dictionary}
 \\
 \texttt{GET api/dictionary/:name}
@@ -229,11 +251,68 @@ V tejto aplikácií sú všetky odosielané aj prijímané dáta vo formáte JSO
 \\
 
 
-\section{Spôsob uloženia slovníku}
-\subsection{Porovnanie}
+\section{Ukladanie dát}
+V desktopovej aplikácií sú slovníky uložené v textových súboroch vo formáte \texttt{.dict}. Každé slovo je na samostatnom riadku a k nemu priradený preklad je na novom riadku pod daným slovom a začína medzerou. Preklad môže tvoriť aj viacero slov, tie sú všetky na jednom riadku oddelené znakom \texttt{;}. Slovník sa do desktopovej aplikácie načíta zo súboru a je uložený v pamäti ako reťazec (\texttt{std::string}).
+
+\theoremstyle{definition}
+\newtheorem{exmp}{Príklad}[chapter]
+\begin{exmp}
+Formát slovníku
+\centering
+\begin{lstlisting}[basicstyle=\small]
+sprechen
+ speak; talk
+reisen
+ travel
+einmal
+ once; one day
+\end{lstlisting}
+\end{exmp}
+
+Na uloženie slovníku však existuje viacero možností. Medzi klasickú voľbu pri implementácií serverových aplikácií patrí napríklad SQL, prípadne NoSQL databáza. Databáza je ale vhodná na ukladanie komplexnejších entít a v prípade slovníku sa jedná o jednoduchú entitu. Navyše pri dotazovaní na dáta kvôli prekladu je vždy potrebný celý slovník, preto je vhodné mať stále v pamäti. Serverová aplikácia tak používa in-memory databázu na prácu s dátami a na permanentné uloženie využíva súbory.
+
+\subsection{In-memory databáza}
+Server má v pamäti uložené slovníký ako objekt, ktorý funguje ako hash mapa. V Javascripte, konkrétne v engine V8, je implementovaný objekt ako pole, v ktorom sú kľúče objektu pomocou nejakej hashovacej funkcie mapované na indexy pola. Prístup na takýto prvok cez kľúč je konštantný. Slová slovníku je možné uložiť ako pár kľúč-hodnota, pričom kľúčom je samotné slovo a hodnotu predstavuje jeho preklad.
+
+\begin{exmp}
+Štruktúra slov slovníku v pamäti
+\centering
+\begin{lstlisting}[basicstyle=\small]
+{
+  "sprechen": "speak; talk",
+  "reisen": "travel",
+  "einmal": "once; one day"
+}
+\end{lstlisting}
+\end{exmp}
+
+\subsection{String vs. Hash map}
+Pre porovnanie dátovej štruktúry reťazca a hash mapy boli vytvorené testy, v ktorých sa vyhľadávala skupina slov v jednotlivých štruktúrach a pri vyhľadávaní sa vypočítavala Levenshteinova vzdialenosť. Testovacie dáta predstavoval slovník s počtom slov 81472. V ňom boli vyhľadávané 4 slová, konkrétne \textit{schwimmen, willkommen, katze} a \textit{grose}. Pre obe štruktúry boli zmerané počty milisekúnd, ktoré predstavujú časovú zložitosť prehľadávania danej štruktúry.
+
+Prehľadávanie hash mapy si vyžaduje iteráciu cez jednotlivé kľúče, prehľadávanie reťazca si vyžaduje iteráciu cez jednotlivé znaky v reťazci. Tých je síce oveľa viac ako kľúčov, ale pri hash mape je nutné ich mapovanie na položky v poli. Výsledkom je teda mierne efektívnejšie prehľadávanie práve v hash mape, ako znázorňuje tabuľka \ref{tab:string-hash}. Tá je ale náročnejšia na pamäť, kedže potrebuje mať uložených množstvo referencií a ďalších atribútov.
+
+Dôvodom pre použitie hash mapy miesto reťazca bol konštantný prístup k jednotlivým slovám. V reťazci by bolo potrebné vždy prechádzať slovník, aby bolo možné slovo nájsť. Takýto prístup ku konkrétnemu slovu je nutný pri operáciach so slovami, akými sú pridanie, editácia a zmazanie slova. Ďalším dôvodom bolo to, že hash mapa už má slová a ich preklady rozpársované a tak sa jednoduchšie pracuje s takouto štruktúrou, ako s celým reťazcom. 
+
+\begin{table}[]
+\centering
+\caption{String vs. Hash map}
+\label{tab:string-hash}
+\begin{tabular}{lll}
+     & Hash map & String   \\
+Time & 640 ms   & 820 ms   \\
+Memory used & 23 773 kB & 12 027 kB
+\end{tabular}
+\end{table}
+
+\subsection{JSON súbor}
+Každý slovník je uložený v samostatnom súbore vo formáte JSON. Pre Javascript je to prirodzený formát a je jednoduché takéto súbory pársovať do objektu, pretože je to natívna funkcionalita metódy \texttt{require}, ktorá slúži na importovanie Javascriptových súborov a modulov. Navyše formát JSON presne popisuje štruktúru objektov v Javascripte.
 
 
 \section{Implementácia}
+\subsection{Asynchrónne metódy}
+V prvotných verziach Node.js boli udalosti, ktoré sa volali po skončení asynchrónnej metódy, implementované pomocou funkcií (zvaných callback), ktoré boli predané ako parametre do danej metódy. S príchodom ECMA Scriptu 2015 sa začali tieto funkcie nahradzovať Promisami. Tie už neboli parametrom asynchrónnej metódy, ale jej výstupnou hodnotou. Promisa obsahuje metódu \texttt{then}, ktorej parametrom je callback po úspešnom skončení Promisy, ďalej metódu \texttt{catch}, ktorej parametrom je callback pre chybový stav v Promise.
+
+ECMA Script 2016 priniesol do Javascriptu kľúčové slová \texttt{async} a \texttt{await}, ktoré sú podporované v Node.js od verzie 7.6 a sú použité v implementácii serveru slovníkovej aplikácie. Stále sa využívajú Promisy a \texttt{await} je iba syntakticky inak napísaný \texttt{then}, avšak prináša prehľadnejšiu štruktúru kódu.
 
 \chapter{These are}
 \section{the available}
