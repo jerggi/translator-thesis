@@ -116,15 +116,22 @@ Ako príklad si zoberme slovo \textit{willkommen}, ktoré by bolo nájdené, aj 
 \end{figure}
 
 \subsection{Algoritmus výpočtu Levenshteinovej vzdialenosti}
-Základom algoritmu je matica \textit{n} x \textit{m}, pričom tieto rozmery určujú dĺžky jedného a druhého slova. S využitím princípov dynamického programovania sa porovnávajú jednotlivé kombinácie prefixov obidvoch slov.
+Základom algoritmu je matica \textit{n + 1} x \textit{m + 1}, pričom \textit{n} je dĺžka prvého slova a \textit{m} je dĺžka druhého slova. S využitím princípu dynamického programovania sa porovnávajú jednotlivé kombinácie prefixov obidvoch slov. Matica má tak naviac jeden riadok a jeden stĺpec, ktoré predstavujú prázdny prefix.
+
+Hlavný problémom je teda určenie minimálnej vzdialenosti - \texttt{D[m,n]}, ktorý je možné rozdeliť na podproblémy tak, že sa určí minimálna vzdialenosť jednotlivých prefixov - \texttt{D[i,j]}, kde \texttt{i} a \texttt{j} sú dĺžky daných prefixov. Matica sa na začiatku inicializuje hodnotami podľa pravidiel \texttt{D[i,0] = i} a \texttt{D[0,j] = 0}. Ďalšie hodnoty sa vypočítajú na základe nasledujúceho vzorca, kde $a_i$ a $b_j$ predstavujú prefixy slov $a$ a $b$:
 
  \begin{equation}
  \texttt{D[i,j] = min}\begin{cases}
-       \texttt{D[i - 1][j - 1] + 1} \\
+       \texttt{D[i - 1][j - 1] + 1\textsubscript{$a_i \neq b_j$}} \\
        \texttt{D[i][j - 1] + 1} \\
        \texttt{D[i - 1][j] + 1}
        \end{cases}
  \end{equation}
+
+V prvom prípade sa jedná o nahradenie znaku s pripočítaním 1, ak sú znaky na pozícii $a_i$ a $b_j$ rôzne. Ak nejaké dva prefixy $a_i-1$ a $b_j-1$ majú určitú editačnú vzdialenosť, tak pridaním rôznych znakov k obom prefixom tútu vzdialenosť zvýši o hodnotu 1, čo predstavuje práve substitúciu pridaných znakov. Ak sú znaky zhodné, potom substitúcia nie je potrebná, takže vzdialenosť sa nemení. 
+
+V druhom prípade sa jedná o pridanie znaku do prefixu $a_i$ a v treťom prípade sa jedná o odobratie znaku z prefixu $a_i$. Po vypočítaní všetkých hodnôt v matici nám vyjde výsledná hodnota práve na pozícii $[m,n]$.
+
 
 
 \chapter{Server}
@@ -223,6 +230,67 @@ Response body:
 \noindent
 \texttt{GET api/dictionary}
 \begin{itemize}
+\item Vráti zoznam všetkých slovníkov s ich základnými parametrami, takže neobsahujú slová s prekladmi
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+[
+  {
+  	"name": "dictionary1",
+  	"revision": 47,
+    "wordCount": 42,
+    "createdAt": 6548745546,
+    "lastEditedAt": 7984641681,
+  },
+  ...
+]
+\end{lstlisting}
+\end{itemize}
+
+\noindent
+\texttt{POST api/dictionary}
+\begin{itemize}
+\item Vytvorí nový slovník a vráti číslo jeho revízie
+\item Parameter \texttt{name} predstavuje meno slovníka a parameter \texttt{text} predstavuje text slov s prekladmi v rovnakom formáte ako v súboroch \texttt{.dict}
+\item \begin{lstlisting}[basicstyle=\small]
+Request body:
+{
+  "name": "dictionary1",
+  "text": "ein\n one\nzwei\n zwei\ndrei\n three"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
+\texttt{GET api/dictionary/:name?json}
+\begin{itemize}
+\item Vráti celý obsah slovníku s menom \texttt{name} a v prípade prítomnosti parametru \texttt{json} (napríklad \texttt{json=true}) sú slová vo formáte JSON, v opačnom prípade sú v textovom formáte DICT
+\item 
+\item \begin{lstlisting}[basicstyle=\small]
+Response body (words in JSON):
+{
+  "name": "string",
+  "revision": int,
+  ...
+  "words": {
+  	"word1": "translation1",
+    "word2": "translation2",
+    ...
+  }
+}
+\end{lstlisting}
+\item \begin{lstlisting}[basicstyle=\small]
+Response body (words in DICT):
+{
+  "name": "string",
+  ...
+  "text": "ein\n one\nzwei\n zwei\ndrei\n three"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
+\texttt{DELETE api/dictionary/:name}
+\begin{itemize}
 \item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
 \item \begin{lstlisting}[basicstyle=\small]
 Response body:
@@ -233,22 +301,108 @@ Response body:
 \end{lstlisting}
 \end{itemize}
 
-\texttt{POST api/dictionary}
-\\
-\texttt{GET api/dictionary/:name}
-\\
-\texttt{DELETE api/dictionary/:name}
-\\
+\noindent
 \texttt{POST api/dictionary/:name/word/}
-\\
+\begin{itemize}
+\item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "app":"dictionaryServer",
+  "version":"0.0.0"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
 \texttt{PUT api/dictionary/:name/word/}
-\\
+\begin{itemize}
+\item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "app":"dictionaryServer",
+  "version":"0.0.0"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
 \texttt{DELETE api/dictionary/:name/word/}
-\\
+\begin{itemize}
+\item Vráti názov a verziu aplikácie a slúži pre desktopového klienta ako overenie, že komunikuje so správnym serverom
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "app":"dictionaryServer",
+  "version":"0.0.0"
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
 \texttt{POST api/sync/dictionary/:name}
-\\
-\texttt{GET api/translate}
-\\
+\begin{itemize}
+\item Služba slúži pre synchronizáciu slovníka desktopového klienta so slovníkom na serveri.
+\item Server dostáva zmeny z desktopového klienta a zároveň mu posiela vlastné zmeny.
+\item \begin{lstlisting}[basicstyle=\small]
+Request body:
+{
+  "revision": 5,
+  "changes": [
+    {
+      "type": "add",
+      "word": "word1",
+      "translation": "translation1"
+    },
+    ...
+  ]
+}
+\end{lstlisting}
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+{
+  "revision": 5,
+  "changes": [
+    {
+      "type": "add",
+      "word": "word1",
+      "translation": "translation1"
+    },
+    ...
+  ]
+}
+\end{lstlisting}
+\end{itemize}
+
+\noindent
+\texttt{GET api/translate?word\&dict}
+\begin{itemize}
+\item Vráti zoznam prekladov k danému slovu z parametra \texttt{word}, ktoré hľadá v slovníkoch uvedených vo viacnásobných parametroch \texttt{dict}.
+\item Parameter \texttt{word} môže byť reťazec viacerych slov, ktoré sa následne rozpársujú na jednotlivé slová pre vyhľadávanie prekladov.
+\item Ak nie je prítomný žiadny parameter \texttt{dict}, preklady sa vyhľadávajú vo všetkých dostupných slovníkoch.
+\item Preklad obsahuje vyhľadávané slovo \texttt{key}, slovo ktoré sa našlo v slovníku (\texttt{word}), jeho preklad (\texttt{translation}), Levenshteinovu vzdialenosť medzi vyhľadávaným a nájdeným slovom (\texttt{distance}) a slovník, v ktorom bolo slovo nájdené (\texttt{dict}).
+\item \begin{lstlisting}[basicstyle=\small]
+Response body:
+[
+  {
+    "word": "word1",
+    "key": "word",
+    "translation": "translation1",
+    "distance": 1,
+    "dict": "dictionary1"
+  },
+  {
+    "word": "word2",
+    "key": "word",
+    "translation": "translation2",
+    "distance": 1,
+    "dict": "dictionary2"
+  },
+  ...
+]
+\end{lstlisting}
+\end{itemize}
 
 
 \section{Ukladanie dát}
@@ -289,7 +443,9 @@ Server má v pamäti uložené slovníký ako objekt, ktorý funguje ako hash ma
 \subsection{String vs. Hash map}
 Pre porovnanie dátovej štruktúry reťazca a hash mapy boli vytvorené testy, v ktorých sa vyhľadávala skupina slov v jednotlivých štruktúrach a pri vyhľadávaní sa vypočítavala Levenshteinova vzdialenosť. Testovacie dáta predstavoval slovník s počtom slov 81472. V ňom boli vyhľadávané 4 slová, konkrétne \textit{schwimmen, willkommen, katze} a \textit{grose}. Pre obe štruktúry boli zmerané počty milisekúnd, ktoré predstavujú časovú zložitosť prehľadávania danej štruktúry.
 
-Prehľadávanie hash mapy si vyžaduje iteráciu cez jednotlivé kľúče, prehľadávanie reťazca si vyžaduje iteráciu cez jednotlivé znaky v reťazci. Tých je síce oveľa viac ako kľúčov, ale pri hash mape je nutné ich mapovanie na položky v poli. Výsledkom je teda mierne efektívnejšie prehľadávanie práve v hash mape, ako znázorňuje tabuľka \ref{tab:string-hash}. Tá je ale náročnejšia na pamäť, kedže potrebuje mať uložených množstvo referencií a ďalších atribútov.
+Prehľadávanie hash mapy si vyžaduje iteráciu cez jednotlivé kľúče, prehľadávanie reťazca si vyžaduje iteráciu cez jednotlivé znaky v reťazci. Tých je síce oveľa viac ako kľúčov, ale pri hash mape je nutné ich mapovanie na položky v poli. Výsledkom je teda mierne efektívnejšie prehľadávanie práve v hash mape, ako znázorňuje tabuľka \ref{tab:string-hash}.
+
+Ďalším zaujímavým parametrom je využitie operačnej pamäte. Hash mapa jej využíva podstatne viac ako reťazec, kedže potrebuje mať popri samotných slovách a prekladoch uložených aj množstvo referencií a ďalších atribútov. V tabuľke sú dáta po načítaní rovnakého slovníku ako použitom pri testovaní vyhľadávania.
 
 Dôvodom pre použitie hash mapy miesto reťazca bol konštantný prístup k jednotlivým slovám. V reťazci by bolo potrebné vždy prechádzať slovník, aby bolo možné slovo nájsť. Takýto prístup ku konkrétnemu slovu je nutný pri operáciach so slovami, akými sú pridanie, editácia a zmazanie slova. Ďalším dôvodom bolo to, že hash mapa už má slová a ich preklady rozpársované a tak sa jednoduchšie pracuje s takouto štruktúrou, ako s celým reťazcom. 
 
@@ -313,6 +469,278 @@ Každý slovník je uložený v samostatnom súbore vo formáte JSON. Pre Javasc
 V prvotných verziach Node.js boli udalosti, ktoré sa volali po skončení asynchrónnej metódy, implementované pomocou funkcií (zvaných callback), ktoré boli predané ako parametre do danej metódy. S príchodom ECMA Scriptu 2015 sa začali tieto funkcie nahradzovať Promisami. Tie už neboli parametrom asynchrónnej metódy, ale jej výstupnou hodnotou. Promisa obsahuje metódu \texttt{then}, ktorej parametrom je callback po úspešnom skončení Promisy, ďalej metódu \texttt{catch}, ktorej parametrom je callback pre chybový stav v Promise.
 
 ECMA Script 2016 priniesol do Javascriptu kľúčové slová \texttt{async} a \texttt{await}, ktoré sú podporované v Node.js od verzie 7.6 a sú použité v implementácii serveru slovníkovej aplikácie. Stále sa využívajú Promisy a \texttt{await} je iba syntakticky inak napísaný \texttt{then}, avšak prináša prehľadnejšiu štruktúru kódu.
+
+Úplne prvou asynchrónnou metódou po spustení programu je práve spustenie servera. Na to slúži metóda \texttt{listen} z frameworku Koa. Pri spracovaní HTTP požiadavkov sa tieto asynchrónne metódy využívajú, čo znamená, že sa dva rôzne požiadavky môžu spracovávať paralérne. Výhodou toho je, že na začatie spracovávania jedného požiadavku nie je potrebné, aby sa spracovávanie druhého pred tým ukončilo.
+
+\subsection{Routing}
+Pre identifikáciu API služieb bol použitý modul \texttt{koa-router}, ktorý funguje ako middleware pre modul \texttt{koa}. Každé spracovanie API služby funguje ako samostatný middleware. Každý middleware porovnáva URL a HTTP metódu a podľa nich buď začne vykonávať kód určený pre danú službu alebo len zavolá ďalší middleware v poradí.
+
+Na začiatku sa vytvorí objekt \texttt{router}, ktorý obsahuje metódy s názvami zhodnými s názvami klasických HTTP metód. Tie majú ako prvý parameter URL, podľa ktorého je spolu s názvom danej metódy možná identifikácia konkrétnej služby. Spracovanie napríklad služby \texttt{GET api/dictionary/:name} môže vyzerať nasledovne:
+
+\begin{exmp}
+Spracovanie HTTP požiadavku
+\centering
+\begin{lstlisting}[basicstyle=\small]
+router.get('/dictionary/:name', async (ctx, next) => {
+  const name = ctx.params.name
+  const dict = DictController.findDictionary(name)
+  
+  ctx.body = dict
+})
+\end{lstlisting}
+\end{exmp}
+
+Ak je prefix \texttt{api/} nastavený v počiatočnej konfigurácií routra, tak sú všetky služby spracovávané spolu s týmto prefixom. Nie je teda potrebné ho písať do URL v každej metóde. Výhodou je aj možnosť tento prefix zmeniť kedykoľvek pre všetky metódy naraz.
+
+Koa-router má aj klasickú metódu \texttt{use}, ktorá funguje rovnako ako \texttt{use} priamo v Koa, takže je možné pridávať middleware-y takým istým spôsobom.
+
+\subsection{Validácia HTTP požiadavkov}
+Pri HTTP požiadavku je možné validovať viacero druhov parametrov. REST API serveru využíva parametre URL pre identifikáciu zdrojov, ďalej využíva parametre z \textit{query} časti URL a využíva aj telo požiadavkov - \textit{Request body}. Na ich validáciu je použitá knižnica Koa-validate, ktorá rozširuje framework Koa. Konkrétne pridáva priamo do objektu \textit{ctx} validačné metódy, ktoré potom vytvoria aj relevantnú HTTP odpoveď v podobe chybových hlášok o vyskytnutých chybách (\texttt{ctx.errors}).
+
+Pre identifikáciu konkrétneho parametra sa používajú tri základné metódy. Konkrétne \texttt{checkParams("url-param")} pre identifikáciu základných parametrov URL, \texttt{checkQuery("queryParam")} pre identifikáciu \textit{query} časti URL a \texttt{checkBody("bodyParam")} pre identifikáciu parametrov \textit{Request body}.
+
+Na spomenuté metódy je potom možné reťaziť validačné metódy, ktoré validujú daný parameter. Umožňujú validovať typ parametra (\texttt{isInt()}), či je prítomný, respektíve či nie je prázdny (\texttt{notEmpty()}) a umožňujú validovať nejaké jeho vlastnosti, napríklad pomocou regulárneho výrazu (\texttt{match()}, prípadne \texttt{notMatch()}).
+
+Validácia \texttt{notEmpty()} sa využíva hlavne v požiadavkoch typu POST a PUT pre zistenie, či sú prítomné povinné dáta pre vytvorenie, prípadne editáciu. Napríklad pri vytvorení alebo editácii slova musí byť prítomné vždy dané slovo aj jeho preklad. 
+
+Pri názvoch slovníkov existuje obmedzenie na niektoré znaky kvôli tomu, že daný názov sa používa aj pre názov príslučných súborov, ktoré by tak nebolo možné vytvoriť v závislosti od používaného operačného systému. Pri zjednotení týchto znakov dostávame množinu znakov $\slash  <  >  *  ?  \backslash  \%  .  :  "  |$
+
+Pri konkrétnych slovách je tiež obmedzenie na špecifické znaky, pretože slovo by malo pozostávať hlavne z písmen a navyše pri prístupe k týmto slovám v Lowdb pomocou metód \texttt{get} a \texttt{set} by niektoré znaky mohli byť brané ako kľúčové znaky pre prístup k ďalším atribútom objektu............
+
+\subsection{Error handling}
+
+\subsection{Databáza}
+Uloženie dát je rozdelené do dvoch sekcií - operačná pamäť a súbory typu JSON, ktoré má daný slovník dva - jeden pre ukladanie slov a druhý pre ukladanie zmien nad týmito slovami. Pri zmene dát v slovníku je nutné uložiť túto zmenu aj do príslušných súborov, na to je použitá Javascriptová knižnica Lowdb. Je to veľmi jednoduchá knižnica, ktorá funguje ako súborová databáza určená na prácu so súbormi typu JSON, ale podporuje aj ďalšie formáty, napríklad BSON alebo XML.
+
+Lowdb umožňuje ukladanie dát do klasického javascriptového objektu (spomínana hash mapa z kapitoly blabla. Pri spustení aplikácie je vytvorený objekt zavolaním \texttt{lowdb('path/to/file.json)} s parametrom cesty k danému súboru. V zložke \texttt{dictionaries} sa nachádzajú súbory s názvom slovníku a v zložke \texttt{meta} sa nachádzajú súbory pre ukladanie zmien s názvom slovníku doplneným prefixom \texttt{\_} (napr. \_dictName.json). Pre každý súbor je tak vytvorený samostatný Lowdb objekt.
+
+Ten obsahuje metódy na prístup k atribútom objektu, napríklad \texttt{get()} na získanie hodnoty a \texttt{set()} na zapísanie hodnoty. Parametrom obidvoch metód je názov atribútu, ktorý predstavuje kľúč v hash mape a metóda \texttt{set} má ako parameter navyše ešte hodnotu, ktorú zapisuje.
+
+Lowdb poskytuje okrem metód \texttt{get} a \texttt{set} aj množstvo ďalších a to konkrétne metódy z knižnice Lodash. Tá obsahuje metódy pre prácu s javascriptovými kolekciami, ktoré sa dajú rovnako použiť pre dáta v Lowdb. Ďalšou dôležitou metódou je \texttt{write()}, ktorá vykonané zmeny uloží do súboru.
+
+\subsection{Parsovanie}
+Pri prekladaní slova pomocou služby \texttt{GET api/translate?word\&dict} sa v parametri \texttt{word} nachádza reťazec, ktorý môže obsahovať viacero slov. Tie sa parsujú z reťazca jednak podľa medzier, ktorými sú oddelené a navyše aj podľa špecifických znakov alebo vlastností určených na rozdelenie slov.
+
+Na vyhľadanie týchto znakov sú použité regulárne výrazy a medzi potencionálne slová sa vloží medzera. Takéto rozdelenie umožnuje pomocou javascriptovej funkcie \texttt{String.prototype.split(' ')} vytvoriť pole slov, s ktorým je už jednoduché pracovať. Regulárne výrazy pre predpokladané programátorské menné konvecie sú nasledovné:
+\\
+
+\noindent
+\texttt{/C[A-Z][a-z]+/g}
+\begin{itemize}
+\item Táto menná konvencia predpokladá výskyt veľkého písmena \textit{C} pred nejakým slovom zašínajúcim tiež veľkým písmenom a znamená označenie triedy (Class).
+\item Príkladom z reťazca \texttt{CKreis} chceme dostať slovo \texttt{kreis}.
+\end{itemize}
+
+\noindent
+\texttt{/[a-z][A-Z]/g}
+\begin{itemize}
+\item Určené pre parsovanie v prípade konvencie s názvom Camel case
+\item Príkladom z reťazca \texttt{findeLetztenIndex} chceme dostať slová \texttt{finde}, \texttt{letzten} a \texttt{index}.
+\end{itemize}
+
+\noindent
+\texttt{/[A-Z]{2,}/g}
+\begin{itemize}
+\item Detekcia konvencie Upper case, pri ktorej všetky písmená v slove sú veľké.
+\item Príkladom z reťazca \texttt{undSCHNELL} chceme dostať slová \texttt{und} a \texttt{schnell}.
+\end{itemize}
+
+\noindent
+\texttt{/\_/g}
+\begin{itemize}
+\item Detekcia konvencie Snake case, podľa ktorej sú slová oddelené znakom \_ (podtŕžnik).
+\item Príkladom z reťazca \texttt{FILTER\_LEERE\_ELEMENTE} chceme dostať slová \texttt{filter}, \texttt{leere} a \texttt{elemente}.
+\end{itemize}
+
+Dôležité je aj poradie, v ktorých sa dané reguláre výrazy aplikujú. Napríklad parsovanie slov s prefixom \textit{C} prebieha ešte pred Upper case parsovaním, pretože potom by sa napríklad slovo \texttt{CKreis} rozdelilo na slová \texttt{CK} a \texttt{reis}.
+
+Príkladom jedného vyhľadávania môže byť nasledovný reťazec: \texttt{CLesenFlauming\_falshGeshrieben word einfachUndSCHNELL}, ktorý sa rozparsuje na slová \texttt{lesen}, \texttt{flaumig}, \texttt{falsh}, \texttt{geschrieben}, \texttt{worte}, \texttt{einfach}, \texttt{und} a \texttt{schnell}. Pri jednom prekladaní sa tak všetky tieto slová vyhľadávajú zvlášť.
+
+\subsection{Práca so slovníkom}
+Prvým krokom v práci s nejakým slovníkom je jeho vytvorenie, to spočíva vo vytvorení dvoch súborov pomocou funkcie z Lowdb, ktorá zároveň vytvorí príslušné objekty v pamäti. Vytvorenie slovníku môže znamenať aj počiatočnú inicializáciu slov z prijatého textu, ktorý sa parsuje na základe formátu DICT.
+
+Ďalšími funkciami pre prácu so slovníkom, konkrétne s jeho slovami, sú \texttt{addWord()} pre pridanie slova, \texttt{changeWord()} pre editáciu slova a \texttt{deleteWord()} pre jeho zmazanie. Tieto metódy sa vyskytujú vo vrstve aplikačnej logiky, aj v databázovej vrstve.
+
+Pri metóde \texttt{addWord()} sa kontroluje, či dané slovo v slovníku už náhodou neexistuje, pretože ak áno, toto slovo sa nemôže vytvoriť. Neumožňuje to základný princíp hash mapy, ktorá môže obsahovať vždy maximálne jeden unikátny kľúč. V takom prípade sa preklad daného slova uloží k už existujúcemu slovu a rozšíri tak jeho preklad.
+
+Pri rozšírení prekladu sa rozparsujú jednotlivé slová pôvodného aj nového prekladu podľa znaku bodkočiarka (;) a tie sa následne zlúčia do jedného reťazca, ale s vynechaním duplicít. Využité sú funkcie \texttt{String.prototype.split(';')} na vytvorenie pola slov, z ktorého sa odstraňujú duplicity a \texttt{Array.prototype.join('; ')} na zlúčenie slov naspäť do reťazca.
+
+Takýto istý prípad môže nastať aj pri metóde \texttt{changeWord()}, ak sa zmení samotné slovo na nejaké nové, ktoré už slovník obsahuje. Vtedy sa preklady zlučujú rovnako. Metóda má nepovinný parameter \texttt{newWord}, ktorý, ak je prítomný, predstavuje zmenu slova a ak prítomný nie je, mení sa iba jeho preklad.
+
+Na datábazovej vrstve sa využívaju Lowdb funkcie \texttt{set("key", "value")} a \texttt{unset("key")}. \texttt{Set} nastavuje slovu ("key") jeho preklad ("value") a \texttt{unset} vymaže slovo ("key") zo slovníka. Pridanie slova sa tak uskutočňuje zavolaním \texttt{set("word", "translation")}, ktoré využíva aj zmena slova, kedže \texttt{set} pôvodnú hodnotu prepíše novou hodnotou. Ak zmena slova zahŕňa aj zmenu na \texttt{newWord}, tak sa zavolá metóda \texttt{unset("word")}, kde parameter "word" predstavuje pôvodné slovo. Táto metóda sa rovnako volá aj pri vymazní slova.
+
+\subsection{Použité knižnice}
+
+
+\section{Synchronizácia slovníkov}
+Úlohou servera je poskytovať cloudové úložisko dát, ktoré by mali byť dostupné pre desktopové aplikácie pre synchronizovanie jednotlivých slovníkov. Desktopový klient môže upravovať svoje dáta aj v offline režime a tieto zmeny si postupne ukladá. Klientov môže byť viacero a každý môže mať rôzne zmeny v svojich dátach. Synchronizáciou sa tak má umožniť, aby všetky zmeny od rozličných klientov sa ukladali na jedno miesto - server a mohli sa tak vykonané zmeny zdieľať medzi všetkými klientmi.
+
+Pri synchronizácií slovníkov je požadovaným výstupným stavom ten, pri ktorom majú slovníky v rôznych klientoch rovnaké dáta. Ideálnym stavom je taktiež, ak sa čo najviac dát zachová, ale to nie je možné vždy dosiahnuť, kedže v zmenách môžu nastať konflikty. Dáta, ktoré sa nijakým spôsobom nemenili, musia zostať taktiež zachované.
+
+Iniciátorom synchronizácie je desktopový klient, ktorá využíva službu servera \texttt{POST api/sync/dictionary/:name}. Zavolaním tejto služby klient posiela svoje zmeny spolu s revíziou slovníku. Služba synchronizuje vždy práve jeden slovník, ktorý je daný parametrom \texttt{name}. Server prijaté zmeny spracuje a zároveň posiela klientovi svoje zmeny, ktoré ešte klient nemá podľa revízie slovníku. V HTTP požiadavku sa teda nachádzajú zmeny klienta a v odpovedi naň sa nachádzajú zmeny serveru.
+
+\subsection{Revízia slovníku}
+Revízia je číslo, ktoré určuje aktuálnosť daného slovníku a slúži na identifikáciu nových zmien pre server. Počiatočná revízia pri vytvorení slovníku na serveri je 1 a pri pridávaní nových zmien sa postupne zvyšuje s každou zmenou o hodnotu 1. Pri synchronizácií sa aktuálna revízia posiela klientovi, ktorý si danú hodnotu udržuje až po ďalšiu synchronizáciu. Čím väčší je teda rozdiel medzi revíziami servera aj klienta, tak tým viac zmien klientovi chýba a tým viac je jeho verzia slovníku staršia.
+
+Pri synchronizácií sa na serveri nájdu všetky zmeny, ktoré majú vyššiu hodnotu svojej revízie ako revízia klienta. Tieto zmeny sú nové a môžu pochádzať buď od jedného alebo aj viacerych desktopových klientov, ale aj od webových klientov. Všetky ich je však potrebné poslať klientovi, ktorý si slovník synchronizuje.
+
+Server si ukladá len určitý počet zmien a tak sa môže stať, že nejaký klient má staršiu revíziu, ako je najstaršia revízia uložená na serveri. Vtedy je potrebné poslať klientovi celý obsah slovníku miesto zmien.
+
+\subsection{Ukladanie zmien}
+Zmeny sa ukladajú vo forme operácií nad slovami v slovníkoch, ktorými sú \textit{addWord}, \textit{changeWord} a \textit{deleteWord}. S každou operáciou sa uloží do súboru objekt reprezentujúci zmenu vo formáte JSON a pridá sa tak na koniec pola zmien. Jeho štruktúru tvoria atribúty \texttt{revision} a \texttt{changes}, ako môžeme vidieť na príklade \ref{exmp:metafile}. Každej jednej zmenej je tak priradená revízia, ktorá sa s každou ďalšou zmenou zvyšuje.
+
+\begin{exmp}
+\label{exmp:metafile}
+Štruktúra zmien slovníku
+\centering
+\begin{lstlisting}[basicstyle=\small]
+"revisions": [
+  {
+    "revision": 1,
+    "changes": null
+  },
+  {
+    "revision": 2,
+    "changes": {
+      "type": "add",
+      "word": "ein",
+      "translation": "one"
+    }
+  },
+  {
+    "revision": 3,
+    "changes": {
+      "type": "delete",
+      "word": "ein"
+    }
+  },
+  ...
+]
+\end{lstlisting}
+\end{exmp}
+
+Atribút \texttt{type} objektu \texttt{changes} označuje typ zmeny, ale na rozdiel od troch typov operácií nad slovníkom, existujú iba dva typy zmien - \texttt{add} a \texttt{delete}. Typ \texttt{add} predstavuje operáciu \textit{addWord}, typ \texttt{delete} predstavuje operáciu \textit{deleteWord} a operácia \textit{changeWord} je reprezentovaná dvoma zmenami ako typ \texttt{delete} nasledovaný typom \texttt{add}.
+
+Počiatočná konfigurácia súboru zmien pri vytvorení slovníku je pole s objektom s atribútmi \texttt{"revision": 1} a \texttt{"changes": null}. Pri vytvorení slovníku v desktopovej aplikácií je počiatočná revízia nulová, takže je možné podľa toho zistiť, že daný slovník ešte nebol synchronizovaný so serverom ani raz. To zabraňuje synchronizácii dvoch rôznych slovníkov s rovnakým názvom.
+
+\subsection{Spracovanie zmien}
+Spracovanie je proces na serveri, pri ktorom sa aplikujú prijaté zmeny na daný slovník a zároveň sa vyhľadajú zmeny, ktoré treba poslať klientovi. Server prijaté zmeny prechádza a podľa typu operácie volá metódy \textit{addWord} a \textit{deleteWord} rovnako, ako keby dostal HTTP-request na služby pre pridanie alebo zmazanie slova.
+
+Odoslané zmeny klient aplikuje rovnakým spôsobom, ale ak sa nejaká z prijatých týka rovnakého slova ako nejaká z odosielaných, tak by mohol byt porušený základný princíp synchronizácie, ktorým je konzistentnosť slovníkov. Príkladom môže byť zmena prekladu slova \textit{wort}, ktorá prišla od klienta a zmazanie slova \textit{wort}, ktoré je na serveri. Po aplikácii zmien by tak na serveri malo byť slovo \textit{wort} a na klientovi by byť nemalo.
+
+Prijaté zmeny je potrebné aplikovať tak, aby konečný stav slovníku odpovedal stavu slovníku na klientovi po odoslaní zmien. Preto je potrebné vyriešiť potencionálne konflikty, ktoré môžu nastať pri rôznych zmenách na rovnakom slove. Rozdelenie operácie \textit{changeWord} na zmeny typu \texttt{add} a \texttt{delete} tento problém značne uľahčuje, pretože je tak jednoduchšie identifikovať zmeny pre konkrétne slovo, keďže \textit{changeWord} sa môže týkať až dvoch slov, pokiaľ sa nemení len preklad, ale aj slovo na nejaké iné.
+
+Ďalšou výhodou ukladania zmien len do dvoch typov je jednoznačnosť výskytu slov. Podľa typu sa dá určit, či sa slovo v slovníku vyskytuje alebo nie, stačí sa pozrieť na jeho poslednú zmenu. Jednotlivé zmeny je tak možné zredukovať v prípade, že určité slovo bolo zmenené viackrát za sebou a niektoré jeho uložené zmeny sa tak môžu opakovať alebo ich nie je potrebné na slovník aplikovať, pretože nejaké nasledujúce zmeny určia konečný stav slova bez ohľadu na predchádzajúce zmeny.
+
+\subsection{Redukcia zmien}
+Zmeny si vieme rozdeliť podľa konkrétnych slov, ktorých sa týkajú a pre každé slovo, vieme odstrániť jeho nepotrebné zmeny. Príkladom môže byť viacnásobné použitie operácie \textit{changeWord} na zmenu prekladu slova, pričom stačí aplikovať iba posledný výskyt tejto operácie, keďže slovo vždy vymaže a vytvorí nové spolu s novým prekladom a preklady vytvorené predtým už slovo obsahovať nebude.
+
+Zmeny jedného slova si môžeme rozdeliť na tri prípady podľa ich postupnosti:
+\begin{itemize}
+\item $\texttt{add}_1$, $\texttt{add}_2$, ..., $\texttt{add}_n$ - postupnosť operácií zložená výhradne z typov \texttt{add}
+\item ..., $\texttt{delete}_{m}$, $\texttt{add}_{m+1}$, ..., $\texttt{add}_n$ - postupnosť obsahujúca aspoň jednu operáciu \texttt{delete} nasledovanú aspoň jednou operáciou \texttt{add}
+\item ..., $\texttt{delete}_{n}$ - postupnosť, ktorej posledná operácia je \texttt{delete}
+\end{itemize}
+
+V prvom prípade sa jedná o pridanie slova, ktoré môže byť viacnásobne, takže pribúdajú nové preklady. Ak slovník slovo už obsahoval, všetky pôvodné preklady sa zachovávajú. V prípade výskytu \texttt{delete} a ukončením postupnosti operáciou \texttt{add} sa pôvodné preklady slova nazachovajú a vzniknú nové. Konkrétne sú to len tie, ktoré sa nachádzajú za poslednou operáciou \texttt{delete}, pretože všetky, ktoré boli pred ňou, budú tiež vymazané. V prípade, keď je \texttt{delete} poslednou operáciou v postupnosti, sa taktiež nezachovajú žiadne preklady a ani žiadne nepribudnú, pretože slovo sa zo slovníka vymaže úplne.
+
+Odstránením všetkých zmien pred posledným výskytom zmeny \texttt{delete} sa zmeny dajú zredukovať. Ak medzi odstránenými je aj typ \texttt{delete}, tak to nevadí, pretože v konečnom stave sa slovo v slovníku vysk
+
+\subsection{Konflikty}
+
+\subsection{Odosielanie zmien}
+
+
+
+
+
+
+\chapter{Webový klient}
+Základom frontendu webových aplikácií sú technológie HTML a CSS, ktoré definujú, ako sa komponenty zobrazujú užívateľovi a programovací jazyk Javascript, ktorý vytvára logiku stránky, takže definuje funkcionalitu komponent. Existuje množstvo Javascriptových frameworkov pre tvorbu webu, medzi najpopulárnejšie v súčasnej dobe patrí AngularJS, React alebo Vue.js. Pre tvorbu tejto webovej aplikácie bol zvolený práve framework React.
+
+\section{React}
+React je framework určený pre tvorbu Single page aplikácií a bol vytvorený spoločnosťou Facebook. Zobrazuje tak práve jednu HTML stránku, ktorej obsah je dynamický, takže vytvára dojem, že stránky sa menia.
+
+\subsection{JSX}
+JSX je formát, ktorý rozširuje základnú syntax jazyku Javascript o elementy typické pre značkovacie jazyky ako HTML alebo XML. V Reacte sa miesto HTML používa práve JSX a výhodou je možnosť kombinovať Javascriptovú logiku s prezentačnými elementami v jednom súbore. Tieto súbory sa prekladajú do Javascriptu, pričom sú použité aj rôzne optimalizácie kódu.
+
+Štruktúra JSX elementu je podobná štruktúre HTML elemntu, skladá sa z názvu, atribútov a obsahu, ktorý ohraničuje začiatočný a ukončovací tag. Takýto JSX element je možné ukladať do premenných, prípadne viacero elementov do poľa. Je možné vkladať dáta do elementov použitím priamo Javascriptového kódu. Dajú sa vytvárať vlastné komponenty zložené z viacerych elementov, ktoré potom odlišujú od natívnych elementov počiatočným veľkým písmenom v názve.
+
+Na príklade blabla vidíme, že elementy sa používajú rovnako ako HTML elementy. Rozdielom je napríklad názvoslovie atribútov, v ktorom sa nepoužívajú pomlčky, ale Camel case a miesto atribútu \textit{class} je použitý \textit{className}, pretože \textit{class} je jedným z kľúčových slov v Javascripte. Javascriptový kód je možné vkladať do elementov pomocou znakov \texttt{\{} a \texttt{\}}.
+
+\begin{exmp}
+JSX štruktúra
+\centering
+\begin{lstlisting}[basicstyle=\small]
+class Person extends React.Component {
+  render () {
+    return (
+      <div className='person'>
+        <p>{this.props.firstName}</p>
+        <p>{this.props.lastName}</p>
+      </div>
+    )
+  }
+}
+
+ReactDOM.render(
+  <Person firstName='Peter' lastName='Parker' />,
+  document.getElementById('root')
+);
+\end{lstlisting}
+\end{exmp}
+
+\subsection{Virtual DOM}
+\textit{Document Object Model} (DOM) je štandardom W3C pre prístup a pracovanie s HTML elementami a definuje stromovú štruktúru elementov dokumentu. Najzložitejšou, respektíve najpomalšou časťou frontendovej logiky býva manipulácia s elementami DOM, ktorá je však nevyhnutná pri zmene zobrazovaných dát a prekleslovaní komponent dokumentu na obrazovku. Cieľom pre optimalizáciu je čo najmenej častá práca s týmito elementami.
+
+React si vytvára popri štandardnom DOM objekte ešte takzvaný Virtual DOM, ktorý reprezentuje DOM elemety a ich štruktúru, takže je jeho kópiou. Práca s ním je však oveľa rýchlejšia, pretože neprebieha žiadne vykreslovanie tejto štruktúry. Pri zmene zobrazovaných dát alebo komponent sa vytvorí nový Virtual DOM objekt, ktorý sa porovná so svojou starou verziou a na základe toho sa určí, ktoré elementy v štandardnom DOM objekte sa majú zmeniť.
+
+React tak redukuje túto manipuláciu na minimálny počet zmien v štandardnom DOM objekte, pretože sa prekreslujú iba tie elementy, pri ktorých je toto prekreslenie nutné. Príkladom môže byť zmena položiek v zozname dát, ktorý je zobrazený v elemente \texttt{<ul>} a jednotlivé položky v elementoch \texttt{<li>}. Pri takej zmene sa prekreslia iba tie elementy \texttt{<li>}, ktoré boli zmenené a neprekresluje sa celý zoznam.
+
+\subsection{One-way binding}
+Ďalšou dôležitou vlastnosťou v Reacte je spôsob, akým sú prepojené dáta v pamäti s elementami, ktoré ich vykreslujú. Zmena dát v pamäti je sledovaná a ihneď sa automaticky prejavuje zmenou dát v elementoch. Opačne sa však táto zmena neprejaví. Zmena v elementoch môže nastať napríklad, keď užívateľ zmení hodnotu v elemente \texttt{<input>}.
+
+To je rozdiel napríklad oproti frameworku AngularJS, ktorý využíva \textit{two-way binding} a zmeny sa prejavujú na obidvoch stranách. V Reacte sa využíva aj pojem \textit{one-way data flow}, ktorý znamená, že dáta prúdia jedným smerom cez komponenty, z ktorých je stránka zložená. Táto architektúra tak programátorm umožňuje lepšiu kontrolu nad logikou pracujúcou s dátami.
+
+Na zmenu dát, ktorá je vyvolaná nejakým elementom v užívateľskom rozhraní, sa využívajú natívne eventy HTML elementov (\textit{onClick}, \textit{onChange}), a tzv. event-listenery, ktoré zachytávajú vyvolanie eventov. Pri vyvolaní eventu sa zavolá priradená funkcia, v ktorej je možné zmeniť dáta aplikácie.
+
+\subsection{State a Props}
+Komponenty v Reacte majú dva základné typy dát, respektíve dva základné typy uloženia dát. Dáta môžu byť uložené bud v objekte \texttt{state} alebo v objekte \texttt{props}. \texttt{State} predstavuje stav komponenty a je možné ho v danej komponente meniť. \texttt{Props} sú všetky atribúty, ktoré do komponenty prichádzajú zvonku z miesta, v ktorom je použitá.
+
+Hlavným rozdielom oproti objektu \texttt{state} je to, že \texttt{props} sa nemôžu meniť vo vnútri komponenty. Komponentová architektúra znamená v Reacte, že hlavná stránka sa skladá z menších komponent a tie sa môžu skladať zase z ďalších menších komponent, atď. To znamená, že komponenta, ktorá obsahuje nejaké \texttt{props}, je časťou nejakej väčšej komponenty. Práve tá môže meniť dáta, ktoré predstavujú \texttt{props} menšej komponenty a naopak priamy prístup k jej objektu \texttt{state} nemá.
+
+\section{Redux}
+Redux je framework, ktorý udržiava stav Javascriptových webových aplikácií. V ňom je možné udržiavať aplikačné dáta alebo aj stav prezentačných komponent. Tento stav je dostupný zo všetkých častí aplikácie a je tak možné zdielať dáta medzi komponentami. Výhodou je aj jednoduchá správa takýchto dát, keďže sú na jednom mieste. V reduxe sa tento stav označuje ako \textit{Store} a je to klasický Javascriptový objekt.
+
+Na zmenu tohto stavu sa využívajú akcie a reducery. Akcie sú objekty, ktoré obsahujú typ akcie, a dáta. Dáta predstavujú nejaké nové alebo zmenené dáta v objekte \textit{Store} a typ slúži na identifikáciu akcie v reduceroch. V nich sa potom upravuje \textit{Store} na základe typu akcie a dát z nej. Reducer predstavuje nejakú časť z objektu \textit{Store} a pri vyvolaní akcie z daného reducera sa upravuje len daná časť. Akcie sa vyvolávaju pomocou reduxovej funkcie \textit{dispatch}.
+
+Použitie týchto akcií na úpravu stavu umožňuje takto jeho jedoduchú správu a redukuje nechcené zásahy do dát. Navyše sprehľadňuje všetky úpravy napríklad pri využití nástroja na výpis do konzoly alebo zobrazenie v špecifickom okne. Takto sú pre programátora viditeľné zároveň všetky dáta v objekte \textit{Store} aj všetky zmeny dát v podobe ich akcií.
+
+Čo sa týka úpravy danej časti objektu \textit{Store}, tá sa vždy vytvára nová, ktorá tak nahradí celú danú časť. Ak ju tvorili datové štruktúry typu objekt alebo pole, aj tie by mali byť vždy novo vytvorené a teda nie iba pôvodne upravené. Podstatou tohto spôsobu je vytvorenie nových referencií, ktoré odakzujú na objekty alebo polia, aby sa predišlo nežiadúcej zmene dát. Často je spolu s Reduxom využívaná aj knižnica Immutable.js, ktorá zabraňuje priamej zmene v datových štruktúrach využívajúcich referencie a vykonáva rôzne optimalizácie pri kopírovaní dat.
+
+\section{Dizajn}
+
+\section{Architektúra}
+\subsection{Kontajnerové a prezentačné komponenty}
+Rozdelenie komponent do kontajnerových a prezentačných je veľmi často používaný návrhový vzor pri vývoji aplikácie v Reacte. Kontajnerová komponenta by mala obsahovať všetkú aplikačnú logiku a prezentačná by mala obsahovať kód pre zobrazovanie dát, ktoré dostáva ako \texttt{props} od kontajnerovej komponenty. Taktiež napríklad funkcie pre \texttt{event-handling} by mali byť definované v kontajnerovej komponente, ďalej predané ako \texttt{props} do prezentačnej komponenty a v nej priradené k určeným elementom.
+
+Ďalším návrhovým vzorom je tvorba prezentačných komponent bez využitia objektu \texttt{state}. Podľa toho sa rozdeľujú komponenty na \textit{statefull} a \textit{stateless} komponenty. Bez objektu \texttt{state} sa tak komponenta správa ako funkcia, ktorá sa označuje pomenovaním \textit{pure function}. Znamená to, že pre rovnaké vstupné hodnoty (v prípade komponent sú to \texttt{props}) sa vráti vždy rovnaká výstupná hodnota.
+
+\subsection{Redux store}
+
+\section{Implementácia}
+\subsection{Konfigurácia}
+\subsection{Preklad slov page}
+\subsection{Praca so slovnikom page}
+
+\chapter{Desktopový klient}
+
+Desktopová aplikácia
+
+\chapter{Záver}
+Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server.
+
+Server bol implementovaný v jazyku Javascript s využitím frameworku Node.js. Slovníky sa ukladajú do súborov formátu JSON a ku každému je vytvorený príslušný súbor pre ukladanie zmien v slovníku, taktiež vo formáte JSON. 
 
 \chapter{These are}
 \section{the available}
