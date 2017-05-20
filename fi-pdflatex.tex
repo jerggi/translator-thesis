@@ -145,9 +145,9 @@ Technológií pre implementáciu serveru je mnoho a ešte pred začiatkom implem
 
 Hlavnou myšlienkou vzniku bolo využitie Javascriptu aj na strane serveru a aj vďaka tomu si Node.js obľúbilo mnoho programátorov, ktorí mali skúsenosti prevažne so skriptovaním na strane klienta práve v tomto jazyku. Ďalšou výhodou bola možnosť využívať aj množstvo javascriptových knižníc, ktoré bolo veľmi jednoduché do aplikácie v Node.js naimportovať. Neskôr však vznikol nástroj na inštalácie externých knižních nazvaný Node Package Manager (NPM).
 
-Základom Node.js je V8 javascriptový interpreter pre Google Chrome. Je založený na asynchrónnom spracovaní udalostí, takže napríklad nevznikajú blokujúce I/O procesy, medzi ktoré patrí prístup k súborom na disku alebo k sieťovým funkciám. Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File System pre správu súborov alebo HTTP pre správu požiadaviek.
+Základom Node.js je V8 javascriptový interpreter pre Google Chrome. Je založený na asynchrónnom spracovaní udalostí, takže napríklad nevznikajú blokujúce I/O procesy, medzi ktoré patrí prístup k súborom na disku alebo k sieťovým funkciám. Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File System pre správu súborov alebo HTTP pre správu požiadaviek \parencite{krause2017introduction}.
 
-Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práve takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Z toho dôvodu som si zvolil práve Node.js, ale taktiež aj kvôli mojim skúsenostiam s programovaním v Javascripte.
+Node.js je vytvorené pre beh na operačných systémoch Windows, Linux a Mac OS. Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práve takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Z toho dôvodu som si zvolil práve Node.js, ale taktiež aj kvôli mojim skúsenostiam s programovaním v Javascripte.
 
 \subsection{Node Package Manager}
 NPM je najznámejší a najpoužívanejší nástroj pre správu javascriptových externých knižníc, či už na strane klienta s využitím rôznych komplexnejších frameworkov, alebo na strane serveru využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice jednoducho - zadaním príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori, a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
@@ -191,7 +191,7 @@ Prostredná vrstva predstavuje aplikačnú logiku. Na základe argumentov, ktor�
 V najnižšej vrstve sa pracuje s dátami, takže obsahuje metódy typu CRUD (create, read, update, delete), ktoré pristupujú priamo k datábaze. Metódy sú teda čo najjednoduchšie a obsahujú funkcionalitu len pre konkrétnu operáciu týkajúcu sa konkrétneho zdroja. Dáta môžu tvoriť slovníky alebo ich uložené zmeny. Táto vrstva tak má nastarosti operácie nad slovami v slovníku, ich ďalšími atribútmi a vytvára zodpovedajúce zmeny pre dané operácie.
 
 \subsection{Client–server model}
-Princíp modelu client-server je, že proces, ktorý predstavuje server, spracováva požiadavky prichádzajúce od viacerých klientov. Server potom posiela dáta naspäť klientom, u ktorých sa zobrazujú.
+Princíp modelu client-server je, že proces, ktorý predstavuje server, spracováva požiadavky prichádzajúce od viacerých klientov. Server potom posiela dáta naspäť klientom, u ktorých sa zobrazujú \parencite{hanson2000client}.
 
 Pri toku dát zo serveru ku klientovi sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát - od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Pri opačnom toku dát - od klienta na server - je nutné spracovať akcie, ktoré užívatelia vykonávajú.
 
@@ -200,7 +200,7 @@ Táto logika môže byť vykonávaná aj na strane serveru a aj na strane klient
 Ja som sa snažil väčšiu časť tejto logiky preniesť práve na stranu klienta. Server teda vytvára odpoveď len vo formáte JSON, ktorú následne webový klient spracuje a vytvára zodpovedajúci HTML kód. Užívateľské akcie sú spracovávané na klientovi, ktorý posiela zodpovedajúce požiadavky serveru buď na čítanie, alebo zapisovanie dát.
 
 \subsection{REST API}
-Pri vytváraní jednotlivých endpointov som využil princípu architektúry REST (Representational State Transfer). Je to architektúra na jednotný prístup k dátam aplikácie alebo k procedúram s dátami. Každá dátová entita má svoj jedinečný identifikátor označovaný ako URI (Uniform Resource Identifier).
+Pri vytváraní jednotlivých endpointov som využil princípu architektúry REST (Representational State Transfer). Je to architektúra na jednotný prístup k dátam aplikácie alebo k procedúram s dátami. Každá dátová entita má svoj jedinečný identifikátor označovaný ako URI (Uniform Resource Identifier) \parencite{masse2011rest}. 
 
 Táto architektúra umožňuje pristupovať k zdrojom pomocou metód protokolu HTTP a využíva z nich tieto štyri:
 \begin{itemize}
@@ -416,7 +416,7 @@ einmal
 
 Na uloženie slovníka však existuje viacero možností. Medzi klasickú voľbu pri implementácii serverových aplikácií patrí napríklad SQL, prípadne NoSQL databáza. Databáza je ale vhodná na ukladanie komplexnejších entít, a v prípade slovníku sa jedná o jednoduchú entitu. Navyše pri dotazovaní sa na dáta kvôli prekladu je vždy potrebný celý slovník, preto je vhodné ho mať stále v pamäti. Serverová aplikácia tak používa in-memory databázu na prácu s dátami a na permanentné uloženie využíva súbory.
 
-\subsection{In-memory databáza}
+\subsection{In-memory databáza} \label{sec:inmemorydb}
 Server má v pamäti uložené slovníky každý ako jeden objekt, ktorý funguje ako hash mapa. V Javascripte, konkrétne v engine V8, je implementovaný objekt ako pole, v ktorom sú kľúče objektu pomocou nejakej hashovacej funkcie mapované na indexy poľa. Prístup na takýto prvok cez kľúč je konštantný. Slová slovníka je možné uložiť ako pár kľúč-hodnota, pričom kľúčom je samotné slovo a hodnotu predstavuje jeho preklad.
 
 \begin{exmp}
@@ -496,7 +496,7 @@ Validácia \texttt{notEmpty()} sa využíva hlavne v requestoch typu POST a PUT 
 
 Pri názvoch slovníkov existuje obmedzenie na niektoré znaky kvôli tomu, že daný názov sa používa aj pre názov príslušných súborov, ktoré by tak nebolo možné vytvoriť v závislosti od používaného operačného systému. Pri zjednotení týchto znakov dostávame množinu znakov $\slash < > * ? \backslash \% : . "  \vert$
 
-Pri konkrétnych slovách je tiež obmedzenie na špecifické znaky, pretože slovo by malo pozostávať hlavne z písmen, a navyše pri prístupe k týmto slovám v Lowdb pomocou metód \texttt{get} a \texttt{set} by niektoré znaky mohli byť brané ako kľúčové znaky pre prístup k ďalším atribútom objektu... TODO
+Pri konkrétnych slovách je tiež obmedzenie na špecifické znaky, pretože slovo by malo pozostávať hlavne z písmen, a navyše pri prístupe k týmto slovám v Lowdb pomocou metód \texttt{get} a \texttt{set} by niektoré znaky mohli byť brané ako kľúčové znaky pre prístup k ďalším atribútom objektu. Všetky bežne používané interpunkčné znamienka sú pri spracovaní slova brané ako rozdelenie tohto slova v mieste výskytu znamienka na dve, prípadne viac slov, ak je znamienok v slove viac. Výnimkou sú znaky apostrof a pomlčka, ktoré sú do slova akceptované, pretože môžu byť súčasťou niektorých slov. 
 
 \subsection{Error handling}
 Chybové stavy servera môžu predstavovať chyby, ktoré vznikli buď na základe očakávaných, alebo neočakávaných akcií v behu programu. Medzi tie očakávané patria tie, ktoré vyplývajú s nesprávneho HTTP requestu. Tými sú:
@@ -507,7 +507,7 @@ Chybové stavy servera môžu predstavovať chyby, ktoré vznikli buď na zákla
 \item nesprávny formát požiadaviek - chýbajúce parametre, nevalidné parametre a iné
 \end{itemize}
 
-Tieto chybné požiadavky sú ošetrené a vytvárajú sa na ne odpovede s relevantným status kódom a chybovou hláškou. Na príklade \ref{exmp:error} je odpoveď servera na dotaz na neexistujúci slovník. Server môže vrátiť Neočakávané chyby sú zachytené middlewarom, ktorý je použitý ako prvý v poradí metódou \texttt{use} z Koa, takže pokrýva všetku ďalšiu logiku spracovania požiadavky.
+Tieto chybné požiadavky sú ošetrené a vytvárajú sa na ne odpovede s relevantným status kódom a chybovou hláškou. Na príklade \ref{exmp:error} je odpoveď servera na dotaz na neexistujúci slovník. Neočakávané chyby sú zachytené middlewarom, ktorý je použitý ako prvý v poradí metódou \texttt{use} z Koa, takže pokrýva všetku ďalšiu logiku spracovania požiadavky.
 
 \begin{exmp}
 \label{exmp:error}
@@ -527,7 +527,7 @@ HTTP response:
 \subsection{Databáza}
 Uloženie dát je rozdelené do dvoch sekcií - operačná pamäť a súbory typu JSON, ktoré má daný slovník dva - jeden pre ukladanie slov a druhý pre ukladanie zmien nad týmito slovami. Pri zmene dát v slovníku je nutné uložiť túto zmenu aj do príslušných súborov, na to je použitá Javascriptová knižnica Lowdb. Je to veľmi jednoduchá knižnica, ktorá funguje ako súborová databáza určená na prácu so súbormi typu JSON, ale podporuje aj ďalšie formáty, napríklad BSON alebo XML.
 
-Lowdb umožňuje ukladanie dát do klasického javascriptového objektu (spomínana hash mapa z kapitoly blabla. Pri spustení aplikácie je vytvorený objekt zavolaním \texttt{lowdb('path/to/file.json)} s parametrom cesty k danému súboru. V zložke \texttt{dictionaries} sa nachádzajú súbory s názvom slovníku a v zložke \texttt{meta} sa nachádzajú súbory pre ukladanie zmien s názvom slovníku doplneným prefixom \texttt{\_} (napr. \_dictName.json). Pre každý súbor je tak vytvorený samostatný Lowdb objekt.
+Lowdb umožňuje ukladanie dát do klasického javascriptového objektu (spomínana hash mapa z kapitoly \ref{sec:inmemorydb}. Pri spustení aplikácie je vytvorený objekt zavolaním \texttt{lowdb('path/to/file.json)} s parametrom cesty k danému súboru. V zložke \texttt{dictionaries} sa nachádzajú súbory s názvom slovníku a v zložke \texttt{meta} sa nachádzajú súbory pre ukladanie zmien s názvom slovníku doplneným prefixom \texttt{\_} (napr. \_dictName.json). Pre každý súbor je tak vytvorený samostatný Lowdb objekt.
 
 Ten obsahuje metódy na prístup k atribútom objektu, napríklad \texttt{get()} na získanie hodnoty a \texttt{set()} na zapísanie hodnoty. Parametrom obidvoch metód je názov atribútu, ktorý predstavuje kľúč v hash mape, a metóda \texttt{set} má ako parameter navyše ešte hodnotu, ktorú zapisuje.
 
@@ -716,7 +716,7 @@ $\texttt{delete}_{C}, \texttt{add}_{C}^+ \longleftrightarrow \texttt{add}_{S}^+$
 \begin{itemize}
 \item klient si vymazal pôvodné preklady slova, takže je ich potrebné vymazať aj serveru a následne spolu s prekladmi klienta pridať znovu jeho nové preklady
 \item prijaté zmeny: [$\texttt{delete}_{C}$, $\texttt{add}_{C}^+$, $\texttt{add}_{S}^+$]
-\item odosielané zmeny: [$\texttt{add}_{S}^+$],
+\item odosielané zmeny: [$\texttt{add}_{S}^+$]
 \end{itemize}
 
 \noindent
@@ -748,7 +748,7 @@ $\texttt{delete}_{C} \longleftrightarrow \texttt{delete}_{S}, \texttt{add}_{S}^+
 \begin{itemize}
 \item pôvodné slovo aj preklady boli z klienta vymazané, ale to aj zo servera, stačí tak poslať klientovi nové pridané slovo s novými prekladmi
 \item prijaté zmeny: []
-\item odosielané zmeny: [$\texttt{add}_{S}^+$],
+\item odosielané zmeny: [$\texttt{add}_{S}^+$]
 \end{itemize}
 
 \noindent
@@ -756,7 +756,7 @@ $\texttt{delete}_{C} \longleftrightarrow \texttt{delete}_{S}$
 \begin{itemize}
 \item slovo nie je ani na serveri ani na klientovi, nie je potrebné aplikovať žiadne zmeny ani na jednej strane
 \item prijaté zmeny: []
-\item odosielané zmeny: [],
+\item odosielané zmeny: []
 \end{itemize}
 
 Pri aplikácii zmien konkrétneho slova na poradí záleží, ale pri zmenách v rôznych slovách nie je dôležité poradie medzi týmito zmenami.
@@ -772,7 +772,7 @@ Základom frontendu webových aplikácií sú technológie HTML a CSS, ktoré de
 React je framework určený pre tvorbu Single page aplikácií a bol vytvorený spoločnosťou Facebook. Zobrazuje tak práve jednu HTML stránku, ktorej obsah je dynamický, takže vytvára dojem, že stránky sa menia.
 
 \subsection{JSX}
-JSX je formát, ktorý rozširuje základnú syntax jazyka Javascript o elementy typické pre značkovacie jazyky ako HTML alebo XML. V Reacte sa miesto HTML používa práve JSX a výhodou je možnosť kombinovať Javascriptovú logiku s prezentačnými elementami v jednom súbore. Tieto súbory sa prekladajú do Javascriptu, pričom sú použité aj rôzne optimalizácie kódu.
+JSX je formát, ktorý rozširuje základnú syntax jazyka Javascript o elementy typické pre značkovacie jazyky ako HTML alebo XML. V Reacte sa miesto HTML používa práve JSX a výhodou je možnosť kombinovať Javascriptovú logiku s prezentačnými elementami v jednom súbore. Tieto súbory sa prekladajú do Javascriptu, pričom sú použité aj rôzne optimalizácie kódu \parencite{gackenheimer2015react}.
 
 Štruktúra JSX elementu je podobná štruktúre HTML elementu, skladá sa z názvu, atribútov a obsahu, ktorý ohraničuje začiatočný a ukončovací tag. Takýto JSX element je možné ukladať do premenných, prípadne viacero elementov do poľa. Je možné vkladať dáta do elementov použitím priamo Javascriptového kódu. Dajú sa vytvárať vlastné komponenty zložené z viacerých elementov, ktoré potom odlišujú od natívnych elementov počiatočným veľkým písmenom v názve.
 
@@ -829,6 +829,19 @@ Použitie týchto akcií na úpravu stavu umožňuje jeho jednoduchú správu a 
 Čo sa týka úpravy danej časti objektu \textit{Store}, tá sa vždy vytvára nová, ktorá tak nahradí celú danú časť. Ak ju tvorili dátové štruktúry typu objekt alebo pole, aj tie by mali byť vždy novo vytvorené a teda nie iba pôvodne upravené. Podstatou tohto spôsobu je vytvorenie nových referencií, ktoré odkazujú na objekty alebo polia, aby sa predišlo nežiadúcej zmene dát. Často je spolu s Reduxom využívaná aj knižnica Immutable.js, ktorá zabraňuje priamej zmene v dátových štruktúrach využívajúcich referencie a vykonáva rôzne optimalizácie pri kopírovaní dát.
 
 \section{Dizajn}
+Pri tvorbe frontendu spočíval návrh vizuálnej stránky užívateľského rozhrania v minimalistickom a jednoduchom dizajne. Využité boli najmä komponenty z externých knižních Material-UI a React-Bootstrap.
+
+Material-UI využíva prvky dizajnového trendu Material Design navrhnutého spoločnosťou Google. Tieto komponenty často využívajú rôzne animácie pri interakcii s užívateľom, ktoré sú však jednoduché a nemajú rušivý vplyv. Pre programátora sú ľahko prispôsobiteľné pomocou množstva props-atribútov a často je ich možné medzi sebou kombinovať. Poskytujú užitočnú funkcionalitu, napríklad pre HTML input je možné zobrazovať interaktívne label, hint text alebo nejakú validačnú hlášku \parencite{materialui}.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=0.5\textwidth]{img/materialui.png}
+	\end{center}
+    \caption{Príklad komponentov Text Field \parencite{materialui}.}
+	\label{fig:materialui}
+\end{figure}
+
+React-Bootstrap poskytuje komponenty pre tvorbu responzívneho web dizajnu prostredníctvom populárnej knižnice Bootsrap, vytvorenej spoločnosťou Twitter.
 
 \section{Architektúra}
 \subsection{Kontajnerové a prezentačné komponenty}
@@ -848,46 +861,14 @@ Rozdelenie komponentov do kontajnerových a prezentačných je veľmi často pou
 Desktopová aplikácia
 
 \chapter{Záver}
-Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server.
+Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server. Vyvinutý software bude používaný v spoločnosti Siemens na súkromnej sieti. Webový klient bude slúžiť pre vývojárov, prípadne iných zamestnacov, ako užívateľské rozhranie prekladovej aplikácie.
 
+Praktická časť zahŕňala návrh spôsobu synchronizácie slovníkov medzi desktopovou aplikáciou a serverom. Tá funguje pomocou ukladania zmien v podobe vykonaných operácií vo forme pridania alebo zmazania slova v offline režime. Rovnakým spôsobom sa zmeny ukladajú aj na serveri a po pripojení aplikácie do siete sa nové zmeny aplikujú na jej slovníky a jej zmeny na slovníky na serveri. Takýto spôsob synchronizácie je efektívnejší z pohľadu objemu zasielaných ako posielanie všetkých slov, ktorých môže byť v slovníku veľké množstvo.
 
+Ďalším možným rozšírením backendu by mohla byť určitá forma autentizácie prístupu k vybraným slovníkom. V aktuálnom stave má každý užívateľ vo všetkých slovníkoch oprávnenie na čítanie aj zapisovanie dát. Užívateľ by si mohol vytvárať svoje privátne slovníky, do ktorých by mal prístup iba on, respektíve by mali ostatní užívatelia iba možnosť iba čítania dát zo slovníka. Najjednoduchším riešením by bolo slovníkom priradiť nejaký prístupový kód vo forme hesla, zložitejsím by bolo vytvoriť správu užívateľov. Oba prípady by si však vyžadovali rozšírenie všetkých softwarových častí - backendu, webového frontendu aj desktopového klienta.
 
+Webový klient umožňuje všetky požadované operácie na prácu so slovníkmi - ich vytvorenie a odstránenie, v samotných slovníkoch potom pridanie, upravenie a mazanie slov. Taktiež je možné prekladať zadané slová podobne ako v desktopovej aplikácii. Existuje veľa možností rozšírenia frontendu, nová funkcionalita sa môže týkať rôznych filtrov alebo usporiadaní slov alebo slovníkov, ďalej môžu byť zobrazované rôzne štatistiky o zmenách v slovníku a podobne.
 
-
-\begin{figure}
-  \begin{minipage}{.66\textwidth}
-    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
-  \end{minipage}
-  \begin{minipage}{.33\textwidth}
-    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf} \\
-    \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
-  \end{minipage}
-  \caption{The logo of the Masaryk University at $\frac23$ and
-    $\frac13$ of text width}
-  \label{fig:mulogo2}
-\end{figure}
-
-\begin{table}
-  \begin{tabularx}{\textwidth}{lllX}
-    \toprule
-    Day & Min Temp & Max Temp & Summary \\
-    \midrule
-    Monday & $13^{\circ}\mathrm{C}$ & $21^\circ\mathrm{C}$ & A
-    clear day with low wind and no adverse current advisories. \\
-    Tuesday & $11^{\circ}\mathrm{C}$ & $17^\circ\mathrm{C}$ & A
-    trough of low pressure will come from the northwest. \\
-    Wednesday & $10^{\circ}\mathrm{C}$ &
-    $21^\circ\mathrm{C}$ & Rain will spread to all parts during the
-    morning. \\
-    \bottomrule
-  \end{tabularx}
-  \caption{A weather forecast}
-  \label{tab:weather}
-\end{table}
-
-The logo of the Masaryk University is shown in Figure \pageref{fig:mulogo2}. The weather
-
-\shorthandon{-}
 
 \chapter{Inserting the bibliography}
 After linking a bibliography data\-base files to the document using
