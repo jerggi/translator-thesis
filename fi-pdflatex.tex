@@ -148,16 +148,16 @@ V tejto kapitole sa zaoberám serverom, ktorý slúži ako backend pre webového
 Server je implementovaný v programovacom jazyku Javascript s využitím frameworku Node.js.
 
 \subsection{Node.js}
-Technológií pre implementáciu serveru je mnoho a ešte pred začiatkom implementácie bolo nutné sa rozhodnúť, ktorú zvoliť. Node.js je pomerne nová technológia, vznikla v roku 2009, avšak odvtedy postupne získavala čoraz viac na popularite.
+Technológií pre implementáciu servera je mnoho a ešte pred začiatkom implementácie bolo nutné sa rozhodnúť, ktorú zvoliť. Node.js je pomerne nová technológia, vznikla v roku 2009, avšak odvtedy postupne získavala čoraz viac na popularite.
 
-Hlavnou myšlienkou vzniku bolo využitie Javascriptu aj na strane serveru a aj vďaka tomu si Node.js obľúbilo mnoho programátorov, ktorí mali skúsenosti prevažne so skriptovaním na strane klienta práve v tomto jazyku. Ďalšou výhodou bola možnosť využívať aj množstvo javascriptových knižníc, ktoré bolo veľmi jednoduché do aplikácie v Node.js naimportovať. Neskôr však vznikol nástroj na inštalácie externých knižních nazvaný Node Package Manager (NPM).
+Hlavnou myšlienkou vzniku bolo využitie Javascriptu aj na strane servera a aj vďaka tomu si Node.js obľúbilo mnoho programátorov, ktorí mali skúsenosti prevažne so skriptovaním na strane klienta práve v tomto jazyku. Ďalšou výhodou bola možnosť využívať aj množstvo javascriptových knižníc, ktoré bolo veľmi jednoduché do aplikácie v Node.js naimportovať. Neskôr však vznikol nástroj na inštalácie externých knižních nazvaný Node Package Manager (NPM).
 
 Základom Node.js je V8 javascriptový interpreter pre Google Chrome. Je založený na asynchrónnom spracovaní udalostí, takže napríklad nevznikajú blokujúce I/O procesy, medzi ktoré patrí prístup k súborom na disku alebo k sieťovým funkciám. Node.js obsahuje rôzne štandardné knižnice, medzi ktoré patrí napríklad File System pre správu súborov alebo HTTP pre správu požiadaviek \parencite{krause2017introduction}.
 
 Node.js je vytvorené pre beh na operačných systémoch Windows, Linux a Mac OS. Výhodou použitia Node.js je jeho jednoduchosť a hodí sa skôr pre menej rozsiahle aplikácie. Práve takáto je však aj táto slovníková aplikácia, ktorá pracuje s malým množstvom dát a nevyžaduje príliš komplexnú funkcionalitu. Z toho dôvodu som si zvolil práve Node.js, ale taktiež aj kvôli mojim skúsenostiam s programovaním v Javascripte.
 
 \subsection{Node Package Manager}
-NPM je najznámejší a najpoužívanejší nástroj pre správu javascriptových externých knižníc, či už na strane klienta s využitím rôznych komplexnejších frameworkov, alebo na strane serveru využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice jednoducho - zadaním príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori, a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
+NPM je najznámejší a najpoužívanejší nástroj pre správu javascriptových externých knižníc, či už na strane klienta s využitím rôznych komplexnejších frameworkov, alebo na strane servera využívajúceho Node.js. Pomocou neho sa dajú stiahnuť a zároveň nainštalovať požadované knižnice jednoducho - zadaním príkazu \texttt{npm install} nasledovaného názvom knižnice. Tieto knižnice môže vytvárať ktorýkoľvek programátor alebo programátori, a keď ich oficiálne publikujú, tak si ich môže ktokoľvek nainštalovať a začať používať. Vďaka tomu existuje obrovské množstvo takýchto knižníc.
 
 Konfiguračným súborom je \texttt{package.json}, v ktorom je zoznam použitých knižníc, ktoré sa všetky stiahnu a nainštalujú príkazom \texttt{npm install} a následne je aplikácia pripravená na spustenie. V \texttt{package.json} sa nachádza aj zoznam skriptov, ktoré je potom možné spustiť príkazom \texttt{npm} nasledovaným názvom skriptu.
 
@@ -200,9 +200,9 @@ V najnižšej vrstve sa pracuje s dátami, takže obsahuje metódy typu CRUD (cr
 \subsection{Client–server model}
 Princíp modelu client-server je, že proces, ktorý predstavuje server, spracováva požiadavky prichádzajúce od viacerých klientov. Server potom posiela dáta naspäť klientom, u ktorých sa zobrazujú \parencite{hanson2000client}.
 
-Pri toku dát zo serveru ku klientovi sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát - od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Pri opačnom toku dát - od klienta na server - je nutné spracovať akcie, ktoré užívatelia vykonávajú.
+Pri toku dát zo servera ku klientovi sa však zvyčajne vykonáva určitá logika. Tá predstavuje rôzne spracovanie dát - od filtrovania cez usporiadavanie až po formátovanie. Ďalej je potrebné dáta transformovať do formátu HTML, ktorý je určený pre zobrazovanie v internetových prehliadačoch. Pri opačnom toku dát - od klienta na server - je nutné spracovať akcie, ktoré užívatelia vykonávajú.
 
-Táto logika môže byť vykonávaná aj na strane serveru a aj na strane klienta a, podľa toho sa aj rozlišujú modely \textit{Thin Client} a \textit{Thick Client}. V prípade modelu \textit{Thin Client} sa väčšina logiky vykonáva na strane serveru, v prípade modelu \textit{Thick Client} je veľká časť logiky presunutá na stranu klienta.
+Táto logika môže byť vykonávaná aj na strane servera a aj na strane klienta a, podľa toho sa aj rozlišujú modely \textit{Thin Client} a \textit{Thick Client}. V prípade modelu \textit{Thin Client} sa väčšina logiky vykonáva na strane servera, v prípade modelu \textit{Thick Client} je veľká časť logiky presunutá na stranu klienta.
 
 Ja som sa snažil väčšiu časť tejto logiky preniesť práve na stranu klienta. Server teda vytvára odpoveď len vo formáte JSON, ktorú následne webový klient spracuje a vytvára zodpovedajúci HTML kód. Užívateľské akcie sú spracovávané na klientovi, ktorý posiela zodpovedajúce požiadavky serveru buď na čítanie, alebo zapisovanie dát.
 
@@ -466,7 +466,7 @@ Každý slovník je uložený v samostatnom súbore vo formáte JSON. Pre Javasc
 \subsection{Asynchrónne metódy}
 V prvotných verziách Node.js boli udalosti, ktoré sa volali po skončení asynchrónnej metódy, implementované pomocou funkcií (zvaných callback), ktoré boli predané ako parametre do danej metódy. S príchodom ECMA Scriptu 2015 sa začali tieto funkcie nahrádzať Promisami. Tie už neboli parametrom asynchrónnej metódy, ale jej výstupnou hodnotou. Promisa obsahuje metódu \texttt{then}, ktorej parametrom je callback po úspešnom skončení Promisy, a ďalej metódu \texttt{catch}, ktorej parametrom je callback pre chybový stav v Promise.
 
-ECMA Script 2016 priniesol do Javascriptu kľúčové slová \texttt{async} a \texttt{await}, ktoré sú podporované v Node.js od verzie 7.6, a sú použité v implementácii serveru slovníkovej aplikácie. Stále sa využívajú Promisy a \texttt{await} je iba syntakticky inak napísaný \texttt{then}, avšak prináša prehľadnejšiu štruktúru kódu.
+ECMA Script 2016 priniesol do Javascriptu kľúčové slová \texttt{async} a \texttt{await}, ktoré sú podporované v Node.js od verzie 7.6, a sú použité v implementácii servera slovníkovej aplikácie. Stále sa využívajú Promisy a \texttt{await} je iba syntakticky inak napísaný \texttt{then}, avšak prináša prehľadnejšiu štruktúru kódu.
 
 Úplne prvou asynchrónnou metódou po spustení programu je práve spustenie servera. Na to slúži metóda \texttt{listen} z frameworku Koa. Pri spracovaní HTTP requestov sa tieto metódy využívajú, čo znamená, že sa dve rôzne požiadavky môžu spracovávať paralélne. Výhodou toho je, že na začatie spracovávania jednej požiadavky nie je potrebné, aby sa spracovávanie druhej pred tým ukončilo.
 
@@ -814,7 +814,7 @@ React si vytvára popri štandardnom DOM objekte ešte takzvaný Virtual DOM, kt
 
 React tak redukuje túto manipuláciu na minimálny počet zmien v štandardnom DOM objekte, pretože sa prekreslujú iba tie elementy, pri ktorých je toto prekreslenie nutné. Príkladom môže byť zmena položiek v zozname dát, ktorý je zobrazený v elemente \texttt{<ul>} a jednotlivé položky v elementoch \texttt{<li>}. Pri takej zmene sa prekreslia iba tie elementy \texttt{<li>}, ktoré boli zmenené a neprekresluje sa celý zoznam.
 
-\subsection{One-way binding}
+\subsection{One-way binding} \label{sec:oneway-binding}
 Ďalšou dôležitou vlastnosťou v Reacte je spôsob, akým sú prepojené dáta v pamäti s elementami, ktoré ich vykreslujú. Zmena dát v pamäti je sledovaná a ihneď sa automaticky prejavuje zmenou dát v elementoch. Opačne sa však táto zmena neprejaví. Zmena v elementoch môže nastať napríklad, keď užívateľ zmení hodnotu v elemente \texttt{<input>}.
 
 To je rozdiel povedzme oproti frameworku AngularJS, ktorý využíva \textit{two-way binding} a zmeny sa prejavujú na obidvoch stranách. V Reacte sa využíva aj pojem \textit{one-way data flow}, ktorý znamená, že dáta prúdia jedným smerom cez komponenty, z ktorých je stránka zložená. Táto architektúra tak programátorom umožňuje lepšiu kontrolu nad logikou pracujúcou s dátami.
@@ -857,9 +857,60 @@ Rozdelenie komponentov do kontajnerových a prezentačných je veľmi často pou
 Ďalším návrhovým vzorom je tvorba prezentačných komponentov bez využitia objektu \texttt{state}. Podľa toho sa rozdeľujú komponenty na \textit{statefull} a \textit{stateless} komponenty. Bez objektu \texttt{state} sa tak komponent správa ako funkcia, ktorá sa označuje pomenovaním \textit{pure function}. Znamená to, že pre rovnaké vstupné hodnoty (v prípade komponentov sú to \texttt{props}) sa vráti vždy rovnaká výstupná hodnota.
 
 \subsection{Redux store}
+Atribúty objektu \texttt{store} by mali byť rozčlenené podľa druhu dát, ktoré sú v nich uložené. Každý atribút má pridelený svoj reducer, v ktorom sa pri zmene dát vytvára nový stav, ktorý je následne priradený do príslušného atribútu. Iniciálny stav objektu vyzerá nasledovne:
+
+\begin{lstlisting}[basicstyle=\small]
+{
+  routing: {
+    ...
+  },
+  form: {
+    ...
+  }
+  translate: {
+    translations: []
+  }
+  dictionary: {
+    dictionaries: [],
+    dictionary: {
+      name: '',
+      words: []
+    }
+  }
+}
+\end{lstlisting}
+
+Objekt \texttt{routing} obsahuje dáta, ktoré sú vytvorené pomocou knižnice React-router-redux. Dáta sa týkajú routingu v aplikácií, takže tam sú uložené napríklad parametre z URL alebo objekt \texttt{router}, ktorý obsahuje metódy pre manipuláciu s URL, takže sa dá pomocou nich vyvolať presmerovanie na inú stránku.
+
+Objekt \texttt{form} je vytvorený externou knižnicou Redux-form, ktorá zjednodušuje prácu s formulármi. Ako bolo spomenuté v kapitole \ref{sec:oneway-binding}, v Reacte je potrebné vytvoriť handling pre zmeny dát v html elementoch typu input, ktoré bývajú súčasťou formulárov. To vykonáva práve táto knižnica. Pri zmenách v rôznych typoch inputov používa reduxové akcie a hodnoty s inputov ukladá do svojho \texttt{store}. Ten sa skladá z viacerych objektov, ktoré predstavujú jednotlivé formuláre v aplikácií, môže tak obsahovať atribúty s názvami \texttt{addWordForm}, \texttt{changeWordForm} a podobne, takže každý formulár má zapúzdrené svoje dáta.
+
+Objekt \texttt{translate} obsahuje dáta využívané pri prekladaní slov. Pri každej požiadavke na preklad sa vrátené preklady uložia do pola \texttt{translations} a sú zobrazené na stránke.
+
+Objekt \texttt{dictionary} obsahuje dáta využívané pri prekladaní slov. V poli \texttt{dictionaries} sa nachádza zoznam všetkých slovníkov dostupných na serveri. Tie sú potom využívané pri výbere konkrétnych slovníkov, v ktorých sa má slovo vyhľadávať na serveri. Ďalej sa využívajú na stánke so zonamom slovníkov. Vo vnorenom objekte \texttt{dictionary} sa nachádza konkrétny slovník obsahujúci všetky svoje slová. Pri vstúpení na stránku detailu slovníku sa konkrétny slovník načíta zo servera a jeho slová sú na stránke potom zobrazované.
+
 
 \section{Implementácia}
+Pre spustenie aplikácie v Reacte je potrebné mať nainštalované samotný modul React spolu s modulom React-dom a modul Webpack spolu s modulom Webpack-dev-server. Webpack slúži na vytvorenie finálneho javascriptového súbory, ktorý obsahuje build aplikácie. Tento súbor sa zvykne označovať ako bundle a je zdrojovým javascriptovým súborom pre stránku zobrazenú v internetovom prehliadači. Webpack-dev-server je server implementovaný v Node.js, ktorý slúži ako middleware pre správu súboru bundle \parencite{webpack}.
+
 \subsection{Konfigurácia}
+React využíva súbor \texttt{webpac.config.js} pre počiatočnú konfiguráciu Webpacku. Hlavné atribúty tejto konfigurácie sú \texttt{entry} - definuje vstupné moduly, z ktorých sa bude vytvárať finálny bundle súbor - ten je definovaný v atríbute \texttt{output}. Táto webová aplikácia má konkrétnu konfiguráciu definovanú nasledovne:
+
+\begin{lstlisting}[basicstyle=\small]
+module.exports = {  
+  entry: {
+    js: ['babel-polyfill', './src/index.js']
+  },
+  output: {
+    filename: 'bundle.js',
+  },
+  ...
+}
+\end{lstlisting}
+
+V prípade vstupného súboru \texttt{index.js} sa tento súbor ešte prekladá pomocou modulu Babel-polyfill, pretože pri implementácií aplikácie sú využité najnovšie prvky z Javascriptu, konkrétne ES7\footnote{Ecma Script 2016}, ktoré nie sú podporované v starších verziach prehliadačov. Zdrojový kód je tak vo výsledku preložený do Javascriptu s pôvodnými jazykovými formami, ktoré sú s väčšinou prehliadačov kompatibilné.
+
+Ďalším prvkom konfigurácie je \texttt{devServer}, ktorý obsahuje konfiguráciu Webpack-dev-servera a aj proxy servera pre komunikáciu s API. V konfigurácii sa nastavujú aj rôzne moduly pre importovanie špecifických súborov, napríklad CSS štýlov v súboroch typu \texttt{.less}
+
 \subsection{Preklad slov page}
 \subsection{Praca so slovnikom page}
 
@@ -963,7 +1014,7 @@ Na obrázku \ref{fig:desktop-ispublic} je dialódové okno pre vytvorenie novéh
 \end{figure}
 
 \chapter{Záver}
-Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server. Vyvinutý softvér bude používaný v spoločnosti Siemens na súkromnej sieti. Webový klient bude slúžiť pre vývojárov, prípadne iných zamestnacov, ako užívateľské rozhranie prekladovej aplikácie.
+Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného servera a vytvorením webovej aplikácie slúžiacej ako frontend pre server. Vyvinutý softvér bude používaný v spoločnosti Siemens na súkromnej sieti. Webový klient bude slúžiť pre vývojárov, prípadne iných zamestnacov, ako užívateľské rozhranie prekladovej aplikácie.
 
 Praktická časť zahŕňala návrh spôsobu synchronizácie slovníkov medzi desktopovou aplikáciou a serverom. Tá funguje pomocou ukladania zmien v podobe vykonaných operácií vo forme pridania alebo zmazania slova v offline režime. Rovnakým spôsobom sa zmeny ukladajú aj na serveri a po pripojení aplikácie do siete sa nové zmeny aplikujú na jej slovníky a jej zmeny na slovníky na serveri. Takýto spôsob synchronizácie je efektívnejší z pohľadu objemu zasielaných ako posielanie všetkých slov, ktorých môže byť v slovníku veľké množstvo.
 
