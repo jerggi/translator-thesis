@@ -73,9 +73,16 @@
 \usepackage{listings}
 \begin{document}
 \chapter{Úvod}
-Theses are rumoured to be the capstones of education, so I decided
-to write one of my own. If all goes well, I will soon have a
-diploma under my belt. Wish me luck!
+Pri vývoji softvéru v IT spoločnostiach spoluracuje medzi sebou viacero vývojárov a často sa využívajú už existujúce zdrojové kódy, na ktorých sa ďalej pracuje. Týka sa to aj spoločnosti Siemens, ktorá bola založená v Nemecku, ale pôsobí aj v Českej republike.
+
+Vývojári v Čechách tak spolupracujú s tými v Nemecku a pracujú s kódom, v ktorom je množstvo cudzích výrazov v nemeckom jazyku, ktoré sa však nenachádzajú v bežných prekladových slovníkoch, pretože sú veľmi špecifické a sú prispôsobené používaniu v kóde. Preto bola vytvorená desktopová aplikácia, ktorá umožňuje vytváranie vlastných slovníkov, do ktorých je možné postupne pridávať dané výrazy a k nim aj ich preklad. Nevýhodou tejto aplikácie je ale to, že pracuje iba s lokálnymi slovníkmi uloženými v konkrétnom počítači. Ak vývojár zistí preklad pre nejaký výraz a ten následne uloží do slovníka, ostatní vývojári tento preklad v svojich slovníkoch mať nebudú.
+
+Cieľom tejto práce je navrhnúť a vytvoriť softvér, ktorý bude fungovať ako server pre desktopových klientov. Jeho hlavnou úlohou bude synchronizácia slovíkov, aby sa lokálne vykonané zmeny v nich dokázali preniesť do slovníkov, ktoré majú ostatní klienti, a dáta v slovníkoch by mali byť konzistentné. Ďalšou požiadavkou je vytvorenie webovej aplikácie, ktorá bude mať rovnakú funkcionalitu ako desktopová aplikácia, ale užívateľ bude môcť využívať jej služby aj na zariadeniach bez nainštalovanej aplikácie a bude mu stačiť iba pripojenie na sieť.
+
+V prvej kapitole je bližšie popísané, ako sa slovník používa a ako funguje vyhľadávanie slov. Obsahuje popis algoritmu pre porovnávnie slov, ktorého základom je výpočet Levenshteinovej vzdialenosti. V druhej kapitole sa nachádza popis implementácie servera a detailný popis synchronizácie. Sú rozobraté všetky možné prípady, ktoré predstavovali problém v podobe konfliktov medzi zmenami v slovníkoch, a je popísané ich riešenie.
+
+Tretia kapitola je venovaná popisu implementácie webovej aplikácie a zobrazuje ukážky vytvoreného užívateľského rozhrania. Štvrtá kapitola sa zaoberá rozšírením desktopovej aplikácie, ktoré je potrebné pre synchronizáciu so serverom. Posledná, piata kapitola obsahuje zhrnutie práce, prezentáciu výsledkov a návrh na ďalšie možné rozšírenia.
+
 
 \chapter{Slovník}
 Táto kapitola sa zaoberá základnými princípmi práce so slovníkmi, ktoré sú uplatňované rovnako v desktopovej aj vo webovej aplikácii.
@@ -600,7 +607,7 @@ Iniciátorom synchronizácie je desktopový klient, ktorý je online . Kroky syn
 
 Pre každý slovník, ktorý je na serveri, klient posiela svoje zmeny spolu s revíziou slovníka, ktorú má uloženú od poslednej synchronizácie. Služba synchronizuje vždy práve jeden slovník, ktorý je daný parametrom \texttt{name}. Server prijaté zmeny spracuje a zároveň posiela klientovi svoje zmeny, ktoré ešte klient podľa revízie slovníka nemá. V HTTP requeste sa teda nachádzajú zmeny klienta a v odpovedi naň sa nachádzajú zmeny servera.
 
-Slovníky, ktoré klient nemá, ale server áno, sú následne stiahnuté cez službu \texttt{GET api/dictionary/:name} každý zvlášť. Na konci procesu by klient mal mať všetky slovníky, ktoré sú na serveri a to v rovnakom stave. Server má všetky slovníky klienta okrem tých, ktoré má klient označené ako nesynchronizovateľné.
+Ak klient aktivuje nový slovník, ktorý predtým nemal, tak sa následne stiahne cez službu \texttt{GET api/dictionary/:name}. Klient môže mať stiahnuté všetky slovníky, ktoré sú na serveri a to v rovnakom stave. Server má všetky slovníky klienta okrem tých, ktoré má klient označené ako nesynchronizovateľné.
 
 \begin{figure}
 	\begin{center}
@@ -841,7 +848,7 @@ Material-UI využíva prvky dizajnového trendu Material Design navrhnutého spo
 	\label{fig:materialui}
 \end{figure}
 
-React-Bootstrap poskytuje komponenty pre tvorbu responzívneho web dizajnu prostredníctvom populárnej knižnice Bootsrap, vytvorenej spoločnosťou Twitter.
+React-Bootstrap poskytuje komponenty pre tvorbu responzívneho web dizajnu prostredníctvom populárnej knižnice Bootsrap, vytvorenej spoločnosťou Twitter. Predpokladaným zariadením, na ktorom sa bude rozhranie frontendu zobrazovať, sú monitory s vysokým rozlíšením, ale s využitím responzivity sa rozhranie prispôsobuje aj na obrazovky s menším rozlíšením, akými môžu byť staršie monitori s menšou uhlopriečkov, prípadne tablety.
 
 \section{Architektúra}
 \subsection{Kontajnerové a prezentačné komponenty}
@@ -857,15 +864,108 @@ Rozdelenie komponentov do kontajnerových a prezentačných je veľmi často pou
 \subsection{Praca so slovnikom page}
 
 \chapter{Desktopový klient}
+Desktopová aplikácia je vytvorená v programovacom jazyku C++ a využíva knižnicu GTK3+ pre tvorbu užívateľského rozhrania. Aby mohla byť synchronizovateľná, bola rozšírená o funkcionalitu pre komunikáciu so serverom, ďalej si ukladá lokálne vykonané zmeny nad slovníkmi a boli pridané nové prvky do GUI.
 
-Desktopová aplikácia
+\section{Synchronizácia}
+Aplikácia si ukladá zmeny rovnakým spôsobom ako server, má ku každému slovníku vytvorený ďalší súbor a zmeny sú vo formáte JSON. Musia sa zhodovať v štruktúre zmien zo servera, aby boli kompatibilné, takže obsahujú atribút \texttt{type}, ktorý nadobúda hodnoty \texttt{add} alebo \texttt{delete}, reprezentácia daných zmien je tiež rovnaká ako na serveri. Odlišujú sa však tým, že neobsahujú číslo revízie.
+
+Aplikácia má uloženú práve jednu hodnotu revízie pre každý slovník, pričom tá sa mení iba pri synchronizácii. Vtedy sa posielajú lokálne zmeny a aplikácia dostane od servera novú hodnotu revízie spolu s novými zmenami od poslednej revízie. Prijaté zmeny sú všetky aplikované na synchronizovaný slovník a číslo revízie sa aktualizuje.
+
+Prijaté zmeny nie je potrebné nijakým spôsobom spracovávať tak, ako je tomu na serveri a po ich aplikácii server predpokladá rovnaký konečný stav svojho a lokálneho slovníka v desktopovom klientovi.
+
+\subsection{Testy}
+Súčasťou aplikácie sú aj unit testy, ktoré sú zamerané na synchronizáciu slovníkov. Testuje sa napríklad pripojenie na server, ale hlavnou úlohou testov je kontrola konečného stavu jednotlivých slovníkov po synchronizácií. Testuje sa tak primárne funkcionalita servera, ktorý má na starosti posielanie zmien pre klienta. Dôležité je, aby server posielal klientovy práve tie zmeny, ktoré klient nemá a aby boli slovníky po ich aplikácii konzistentné.
+
+V testoch sa vždy vytvoria aspoň dva slovníky, ktoré sa na začiatku synchronizujú s nejakým iniciálnym zoznamom slov. Následne sa vykonávajú rôzne kombinácie operácií \textit{addWord}, \textit{changeWord} a \textit{deleteWord} vo všetkých slovníkoch. Potom sa slovníky opäť synchronizujú a porovnajú sa ich obsahy a revízie.
+
+\begin{exmp}
+\label{exmp:test}
+Unit test na synchronizáciu slovníkov
+\centering
+\begin{lstlisting}[basicstyle=\small]
+TEST_CASE("conflicts add-change", "[!hide][server]")
+{
+   Dict d1;
+   d1.setName("testDictionary");
+   d1.mOnline = true;
+   d1.fill("base\n trBase\nword\n translation");
+   d1.deleteFromServer(server).get();
+   REQUIRE(d1.sync(server));
+
+   d1.addWord("newWord", "newTranslationD1");
+   d1.changeWord("word", "translationChangeD1");
+
+   Dict d2;
+   d2.mOnline = true;
+   d2.setName("testDictionary");
+   REQUIRE(d2.sync(server));
+
+   d2.addWord("newWord", "newTranslationD2");
+   d2.addWord("word", "translationAddD2");
+
+   REQUIRE(d1.sync(server));
+   REQUIRE(d2.sync(server));
+   REQUIRE(d1.sync(server));
+
+   L->info("d1: {}", *d1.getContens());
+   L->info("d2: {}", *d2.getContens());
+
+   REQUIRE(d1 == d2);
+   REQUIRE(d1.getRevision() == d2.getRevision());
+}
+\end{lstlisting}
+\end{exmp}
+
+Na príklade \ref{exmp:test} je ukážka testu, ktorý sa zaoberá konfliktnými zmenami v slovníku. Vytvorené sú slovníky \texttt{d1} a \texttt{d2}, ktoré predstavujú rovnaké slovníky u dvoch rôznych klientov. Funkcia \texttt{d1.sync()} slovník synchronizuje, ak už je na serveri, ale ak nie je, tak ho vytvorí. Klient \texttt{d2} si tento slovník celý stiahne, kedže zatial na serveri nie sú uložené žiadne zmeny. Medzitým si klient \texttt{d1} aj \texttt{d2} uložia nové zmeny. Následne klient \texttt{d1} pošle svoje nové zmeny na server - \texttt{d1.sync()}, takže má uložené tieto slová
+
+\begin{lstlisting}[basicstyle=\small]
+base: trBase
+word: translationChangeD1
+newWord: newTranslationD1
+\end{lstlisting}
+
+Po synchronizácii klienta \texttt{d2} má uložené tieto slová:
+
+\begin{lstlisting}[basicstyle=\small]
+base: trBase
+newWord: newTranslationD2; newTranslationD1
+word: translationAddD2; translationChangeD1
+\end{lstlisting}
+
+Po poslednej synchronizácií \texttt{d1} sa stiahnu nové zmeny od \texttt{d2} a obsahuje tieto slová:
+
+\begin{lstlisting}[basicstyle=\small]
+base: trBase
+newWord: newTranslationD1; newTranslationD2
+word: translationAddD1; translationChangeD2
+\end{lstlisting}
+
+Po synchronizácií sa slovníky porovnajú definovaným operátorom \texttt{==}, ktorý porovnáva jednotlivé slová a preklady. Taktiež revízie slovníka musia byť zhodné.
+
+\section{Užívateľské rozhranie}
+Do užívateľskeho rozhrania bola pridaná možnosť pripojenia na server, cez ktorý sa majú slovníky synchronizovať. Táto možnosť sa nachádza v nastaveniach aplikácie a je znázornená na obrázku \ref{fig:desktop-settings}.
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=0.8\textwidth]{img/desktop-settings.png}
+	\end{center}
+    \caption{Nastavenia aplikácie}
+	\label{fig:desktop-settings}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=0.6\textwidth]{img/desktop-ispublic.png}
+	\end{center}
+    \caption{Vytvorenie slovníka}
+	\label{fig:desktop-ispublic}
+\end{figure}
 
 \chapter{Záver}
-Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server. Vyvinutý software bude používaný v spoločnosti Siemens na súkromnej sieti. Webový klient bude slúžiť pre vývojárov, prípadne iných zamestnacov, ako užívateľské rozhranie prekladovej aplikácie.
+Táto diplomová práca sa zaoberala rozšírením desktopovej aplikácie prekladového slovníku o synchronizáciu slovníkov pomocou implementovaného serveru a vytvorením webovej aplikácie slúžiacej ako frontend pre server. Vyvinutý softvér bude používaný v spoločnosti Siemens na súkromnej sieti. Webový klient bude slúžiť pre vývojárov, prípadne iných zamestnacov, ako užívateľské rozhranie prekladovej aplikácie.
 
 Praktická časť zahŕňala návrh spôsobu synchronizácie slovníkov medzi desktopovou aplikáciou a serverom. Tá funguje pomocou ukladania zmien v podobe vykonaných operácií vo forme pridania alebo zmazania slova v offline režime. Rovnakým spôsobom sa zmeny ukladajú aj na serveri a po pripojení aplikácie do siete sa nové zmeny aplikujú na jej slovníky a jej zmeny na slovníky na serveri. Takýto spôsob synchronizácie je efektívnejší z pohľadu objemu zasielaných ako posielanie všetkých slov, ktorých môže byť v slovníku veľké množstvo.
 
-Ďalším možným rozšírením backendu by mohla byť určitá forma autentizácie prístupu k vybraným slovníkom. V aktuálnom stave má každý užívateľ vo všetkých slovníkoch oprávnenie na čítanie aj zapisovanie dát. Užívateľ by si mohol vytvárať svoje privátne slovníky, do ktorých by mal prístup iba on, respektíve by mali ostatní užívatelia iba možnosť iba čítania dát zo slovníka. Najjednoduchším riešením by bolo slovníkom priradiť nejaký prístupový kód vo forme hesla, zložitejsím by bolo vytvoriť správu užívateľov. Oba prípady by si však vyžadovali rozšírenie všetkých softwarových častí - backendu, webového frontendu aj desktopového klienta.
+Ďalším možným rozšírením backendu by mohla byť určitá forma autentizácie prístupu k vybraným slovníkom. V aktuálnom stave má každý užívateľ vo všetkých slovníkoch oprávnenie na čítanie aj zapisovanie dát. Užívateľ by si mohol vytvárať svoje privátne slovníky, do ktorých by mal prístup iba on, respektíve by mali ostatní užívatelia iba možnosť iba čítania dát zo slovníka. Najjednoduchším riešením by bolo slovníkom priradiť nejaký prístupový kód vo forme hesla, zložitejsím by bolo vytvoriť správu užívateľov. Oba prípady by si však vyžadovali rozšírenie všetkých softvérových častí - backendu, webového frontendu aj desktopového klienta.
 
 Webový klient umožňuje všetky požadované operácie na prácu so slovníkmi - ich vytvorenie a odstránenie, v samotných slovníkoch potom pridanie, upravenie a mazanie slov. Taktiež je možné prekladať zadané slová podobne ako v desktopovej aplikácii. Existuje veľa možností rozšírenia frontendu, nová funkcionalita sa môže týkať rôznych filtrov alebo usporiadaní slov alebo slovníkov, ďalej môžu byť zobrazované rôzne štatistiky o zmenách v slovníku a podobne.
 
