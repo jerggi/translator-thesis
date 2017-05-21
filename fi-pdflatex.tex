@@ -864,6 +864,8 @@ Rozdelenie komponentov do kontajnerových a prezentačných je veľmi často pou
 \subsection{Praca so slovnikom page}
 
 \chapter{Desktopový klient}
+Desktopová aplikácia slúži pre vývojarávou ako pomoc pri práci so zdrojovými kódmi a je prispôsobená na rýchle vyhľadanie požadovaných prekladov. Je vytvorená tak, že poskytuje čo najjednoduchšie užívateľské rozhranie, aby vývojári nemuseli strácať čas so zaoberaním sa aplikáciou a mohli ju využívať čo najrýchlejsšie.
+
 Desktopová aplikácia je vytvorená v programovacom jazyku C++ a využíva knižnicu GTK3+ pre tvorbu užívateľského rozhrania. Aby mohla byť synchronizovateľná, bola rozšírená o funkcionalitu pre komunikáciu so serverom, ďalej si ukladá lokálne vykonané zmeny nad slovníkmi a boli pridané nové prvky do GUI.
 
 \section{Synchronizácia}
@@ -871,7 +873,7 @@ Aplikácia si ukladá zmeny rovnakým spôsobom ako server, má ku každému slo
 
 Aplikácia má uloženú práve jednu hodnotu revízie pre každý slovník, pričom tá sa mení iba pri synchronizácii. Vtedy sa posielajú lokálne zmeny a aplikácia dostane od servera novú hodnotu revízie spolu s novými zmenami od poslednej revízie. Prijaté zmeny sú všetky aplikované na synchronizovaný slovník a číslo revízie sa aktualizuje.
 
-Prijaté zmeny nie je potrebné nijakým spôsobom spracovávať tak, ako je tomu na serveri a po ich aplikácii server predpokladá rovnaký konečný stav svojho a lokálneho slovníka v desktopovom klientovi.
+Prijaté zmeny nie je potrebné nijakým spôsobom spracovávať tak, ako je tomu na serveri a po ich aplikácii server predpokladá rovnaký konečný stav svojho a lokálneho slovníka v desktopovom klientovi. Novo vytvorené slovníky sa nesynchronizujù, ale novo sa vytvoria na serveri.
 
 \subsection{Testy}
 Súčasťou aplikácie sú aj unit testy, ktoré sú zamerané na synchronizáciu slovníkov. Testuje sa napríklad pripojenie na server, ale hlavnou úlohou testov je kontrola konečného stavu jednotlivých slovníkov po synchronizácií. Testuje sa tak primárne funkcionalita servera, ktorý má na starosti posielanie zmien pre klienta. Dôležité je, aby server posielal klientovy práve tie zmeny, ktoré klient nemá a aby boli slovníky po ich aplikácii konzistentné.
@@ -916,15 +918,14 @@ TEST_CASE("conflicts add-change", "[!hide][server]")
 \end{lstlisting}
 \end{exmp}
 
-Na príklade \ref{exmp:test} je ukážka testu, ktorý sa zaoberá konfliktnými zmenami v slovníku. Vytvorené sú slovníky \texttt{d1} a \texttt{d2}, ktoré predstavujú rovnaké slovníky u dvoch rôznych klientov. Funkcia \texttt{d1.sync()} slovník synchronizuje, ak už je na serveri, ale ak nie je, tak ho vytvorí. Klient \texttt{d2} si tento slovník celý stiahne, kedže zatial na serveri nie sú uložené žiadne zmeny. Medzitým si klient \texttt{d1} aj \texttt{d2} uložia nové zmeny. Následne klient \texttt{d1} pošle svoje nové zmeny na server - \texttt{d1.sync()}, takže má uložené tieto slová
-
+Na príklade \ref{exmp:test} je ukážka testu, ktorý sa zaoberá konfliktnými zmenami v slovníku. Vytvorené sú slovníky \texttt{d1} a \texttt{d2}, ktoré predstavujú rovnaké slovníky u dvoch rôznych klientov. Funkcia \texttt{d1.sync()} slovník synchronizuje, ak už je na serveri, ale ak nie je, tak ho vytvorí. Klient \texttt{d2} si tento slovník celý stiahne, kedže zatial na serveri nie sú uložené žiadne zmeny. Medzitým si klient \texttt{d1} aj \texttt{d2} uložia nové zmeny. Následne klient \texttt{d1} pošle svoje nové zmeny na server - \texttt{d1.sync()}, takže má uložené tieto slová:
 \begin{lstlisting}[basicstyle=\small]
 base: trBase
 word: translationChangeD1
 newWord: newTranslationD1
 \end{lstlisting}
 
-Po synchronizácii klienta \texttt{d2} má uložené tieto slová:
+Po synchronizácii klienta \texttt{d2} má \texttt{d2} uložené tieto slová:
 
 \begin{lstlisting}[basicstyle=\small]
 base: trBase
@@ -932,7 +933,7 @@ newWord: newTranslationD2; newTranslationD1
 word: translationAddD2; translationChangeD1
 \end{lstlisting}
 
-Po poslednej synchronizácií \texttt{d1} sa stiahnu nové zmeny od \texttt{d2} a obsahuje tieto slová:
+Po poslednej synchronizácií \texttt{d1} sa stiahnu nové zmeny od \texttt{d2} a \texttt{d1} tak obsahuje tieto slová:
 
 \begin{lstlisting}[basicstyle=\small]
 base: trBase
@@ -940,10 +941,10 @@ newWord: newTranslationD1; newTranslationD2
 word: translationAddD1; translationChangeD2
 \end{lstlisting}
 
-Po synchronizácií sa slovníky porovnajú definovaným operátorom \texttt{==}, ktorý porovnáva jednotlivé slová a preklady. Taktiež revízie slovníka musia byť zhodné.
+Po synchronizácii sa slovníky porovnajú definovaným operátorom \texttt{==}, ktorý porovnáva jednotlivé slová a preklady, takže nezáleží na poradí slov v slovníkoch a prekladov v slovách. Taktiež revízie slovníka musia byť zhodné, keďže slovník \texttt{d1} už revíziu nezvyšoval, pretože neposielal žiadne nové zmeny.
 
 \section{Užívateľské rozhranie}
-Do užívateľskeho rozhrania bola pridaná možnosť pripojenia na server, cez ktorý sa majú slovníky synchronizovať. Táto možnosť sa nachádza v nastaveniach aplikácie a je znázornená na obrázku \ref{fig:desktop-settings}.
+Do užívateľskeho rozhrania bola pridaná možnosť pripojenia na server, cez ktorý sa majú slovníky synchronizovať. Táto možnosť sa nachádza v nastaveniach aplikácie a je znázornená na obrázku \ref{fig:desktop-settings}. Zakliknutím checkboxu \texttt{Synchronization server} sa dá zvoliť, či sa má aplikácia synchronizovať so serverom, a ak je táto možnosť zvolená, tak je možné zadať požadovanú URL, na ktorej sa server nachádza.
 \begin{figure}
 	\begin{center}
 	\includegraphics[width=0.8\textwidth]{img/desktop-settings.png}
@@ -952,6 +953,7 @@ Do užívateľskeho rozhrania bola pridaná možnosť pripojenia na server, cez 
 	\label{fig:desktop-settings}
 \end{figure}
 
+Na obrázku \ref{fig:desktop-ispublic} je dialódové okno pre vytvorenie nového slovníku. To obsahuje checkbox \texttt{Synchronized with server}, ktorým sa dá zvoliť možnosť, či slovník bude synchronizovaný alebo nie.
 \begin{figure}
 	\begin{center}
 	\includegraphics[width=0.6\textwidth]{img/desktop-ispublic.png}
