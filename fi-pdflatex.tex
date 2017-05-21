@@ -164,7 +164,7 @@ Konfiguračným súborom je \texttt{package.json}, v ktorom je zoznam použitýc
 Knižnice môžu mať tiež svoj vlastný \texttt{package.json}, v ktorom sa nachádza zoznam ďalších knižníc, ktoré samotná knižnica využíva. Pri inštalácii sa vytvorí priečinok \texttt{node\_modules} obsahujúci jednotlivé knižnice a zároveň aj knižnice nainštalované ako ich závislosti.
 
 \subsection{Koa.js}
-Koa.js je jeden z frameworkov pre Node.js slúžiaci pre vývoj webových aplikácií. Je to pomerne málo rozsiahla knižnica s jednoduchou funkcionalitou, ale umožňuje rôzne rozšírenia o ďalšie frameworky a to formou funkcií, ktoré fungujú ako middleware. 
+Koa.js je jeden z frameworkov pre Node.js slúžiaci pre vývoj webových aplikácií. Je to pomerne málo rozsiahla knižnica s jednoduchou funkcionalitou, ale umožňuje rôzne rozšírenia o ďalšie frameworky a to formou funkcií, ktoré fungujú ako middleware \parencite{koajs}.
 
 V aplikácii sa na začiatku vytvorí objekt obsahujúci metódu \texttt{use}, ktorej parametrom je asynchrónna funkcia - middleware. Tá ma dva vstupné parametre. Prvým z nich je objekt predstavujúci kontext HTTP requestu (\texttt{ctx}) a druhým je asynchrónna funkcia (\texttt{next}), ktorá spúšťa ďalší middleware.
 
@@ -911,8 +911,56 @@ V prípade vstupného súboru \texttt{index.js} sa tento súbor ešte prekladá 
 
 Ďalším prvkom konfigurácie je \texttt{devServer}, ktorý obsahuje konfiguráciu Webpack-dev-servera a aj proxy servera pre komunikáciu s API. V konfigurácii sa nastavujú aj rôzne moduly pre importovanie špecifických súborov, napríklad CSS štýlov v súboroch typu \texttt{.less}
 
-\subsection{Preklad slov page}
-\subsection{Praca so slovnikom page}
+\subsection{Preklad slov}
+Úvodnou stránkou aplikácie je vyhľadávanie prekladov slov. Dizajnovo je inšpirovaná z GUI desktopovej aplikácie, kde sa nachádza textový input pre zadanie hľadaného výrazu a pod ním tabuľka s nájednými prekladmi. Navyše sa tu nachádza select pre výber slovníkov, v ktorých sa má vyhľadávať, v ktorom sa dá zvoliť viacej možností. Zvolené slovníky si aplikácia pamätá, ukladá si ich do HTML5 Local storage \parencite{webstorage}.
+
+V tabuľke (viď príklad \ref{fig:translate-page}) sa zobrazujú štyri atribúty pre každý nájdený preklad:
+
+\begin{itemize}
+\item \texttt{Word} - užívateľom zadané slovo, podľa ktorého bol preklad nájdený
+\item \texttt{Match} - slovo uložené v slovníku
+\item \texttt{Dictionary} - slovník, v ktorom bol preklad nájdený
+\item \texttt{Translation} - preklad nájdeného slova
+\end{itemize}
+
+Pôvodné slová zo slovníka sú farebne odlíšené na základe Levenshteinovej vzdialenosti s vyhľadávaným slovom, pričom zelená predstavuje presnú zhodu, oranžová znamená rozdiel o jeden znak a čevená o dva. Podobne sú slová zobrazené aj v desktopovej aplikácií, čo je prívetivé pre užívateľov, ktorí si môžu zvyknúť na jednotný spôsob.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=1.0\textwidth]{img/translate-page.png}
+	\end{center}
+    \caption{Úvodná stránka aplikácie}
+	\label{fig:translate-page}
+\end{figure}
+
+\subsection{Zobrazenie slovníkov}
+Ďalšou stránkou aplikácie je zoznam všetkých slovníkov, ktoré sú zobrazené v tabuľke. Okrem názvu slovníka obsahuje tabulka aj ďalšie jeho atribúty - počet slov, dátum vytvorenia a dátum poslednej editácie slovníku. Po kliknutí na slovník sa otvorí stránka, ktorá zobrazuje všetky jeho slová v tabuľke.
+
+Na zobrazenie slov je využitý modul React-virtualized, ktorý pomáha optimalizovať vykreslovanie stránok s veľkým množstvom dát. Slov môže byť v slovníku pomerne veľa a ak by boli na jednej stránke zobrazené všetky naraz - dokument by obsahoval všetky elementy zodpovedajúce slovníkom - efektivita vykreslovania stránky by klesla, pretože by sa porovnávalo veľké množstvo dát pri prekreslovaní.
+
+Užívateľ vidí na obrazovke vždy len určitú časť z tabuľky, v ktorej sa môže pohybovať pomocou kolečka myši alebo scrollbaru smerom hore alebo dole. Pri použití modulu React-virtualized sa do dokumenty vkladá len určitý počet elementov. Sú to vždy práve tie, ktoré sú aktuálne zobrazené v tabuľke plus ďalších niekoľko nad nimi a pod nimi. Tie sú tam preto, aby boli hneď dostupné pre vykreslenie, ak sa užívateľ začne v tabuľke pohybovať. Zobrazované elementy sa vypočítajú na základe offsetu podľa aktuálnej pozície v tabuľke.
+
+\subsection{Editácia slov}
+Na stránke prekladov, a aj na stránke zobrazania konkrétneho slovníka, je možné editovať slová, prípadne ich mazať. Kliknutím na ikonu menu pri zvolenom slove sa zobrazia možnosti - \texttt{Edit word} a \texttt{Delete word}. Pre editáciu sa otvorí dialógové okno s formulárom (viď obrázok \ref{fig:changeword-form}), ktorý obsahuje textové polia pre atribúty prekladu - \texttt{Word} a \texttt{New translation}, ktoré sú povinné, a nepovinné pole \texttt{New word}.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=1.0\textwidth]{img/changeword-form.png}
+	\end{center}
+    \caption{Formulár pre zmenu slova.}
+	\label{fig:changeword-form}
+\end{figure}
+
+Pri zmazaní slova sa otvorí dialógové okno, v ktorom sa vymazanie slova ešte buď potvrdí, alebo zruší. Pridanie slova je možné iba na stránke daného slovníku. Po kliknutí na tlačidlo \texttt{Add word} sa otvorí dialógové okno s povinnými textovými polami \texttt{Word} a \texttt{Translation} (viď obrázok \ref{fig:addword-form}).
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[width=1.0\textwidth]{img/addword-form.png}
+	\end{center}
+    \caption{Formulár pre pridanie nového slova.}
+	\label{fig:addword-form}
+\end{figure}
+
 
 \chapter{Desktopový klient}
 Desktopová aplikácia slúži pre vývojarávou ako pomoc pri práci so zdrojovými kódmi a je prispôsobená na rýchle vyhľadanie požadovaných prekladov. Je vytvorená tak, že poskytuje čo najjednoduchšie užívateľské rozhranie, aby vývojári nemuseli strácať čas so zaoberaním sa aplikáciou a mohli ju využívať čo najrýchlejsšie.
